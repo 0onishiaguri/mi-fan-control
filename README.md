@@ -1,4 +1,4 @@
-# MiFan Control（米风控温）
+# MiFan Control（红米风扇机型控制台）
 
 > Redmi K90 Ultra / K90 Max 风扇控制 —— 一个基于 Root 的系统级散热风扇控制应用。
 > 支持四大控制模式、实时转速/温度监控、桌面小组件与智能温控曲线。
@@ -7,7 +7,7 @@
 
 ## 项目简介
 
-MiFan Control 是一个针对 **Redmi K90 Ultra / K90 Max（HyperOS 3.0）** 开发的散热风扇控制应用。
+MiFan Control 是一个针对 **Redmi K90 Ultra / K90 Max（HyperOS 4.0）** 开发的散热风扇控制应用。
 应用通过 `su` 读写系统风扇节点（`/sys/class/leds/...` 等），实现风扇转速的全方位精细控制，
 同时提供实时监控、桌面小组件、温控曲线、日志审计等功能，适合对设备散热有精细化需求的玩家与开发者。
 
