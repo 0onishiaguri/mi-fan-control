@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>荣誉内测人员</title>
+    <style>
+        /* 浅色主题默认变量 */
+        :root {
+            --text-color: #111;
+            --separator-color: #555;
+            --glass-bg: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-placeholder: #555;
+            --glass-icon: #555;
+            --header-bg: rgba(255, 255, 255, 0.85);
+            --mask-color: rgba(255, 255, 255, 0.9);
+            --bg-gradient: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            --donor-tag-color: #6a4c00;
+            --donor-tag-bg: rgba(255, 215, 0, 0.7);
+            --donor-tag-border: rgba(106, 76, 0, 0.4);
+        }
+
+        /* 深色主题类，由 JS 动态添加/移除 */
+        .dark-mode {
+            --text-color: #fff;
+            --separator-color: #aaa;
+            --glass-bg: rgba(0, 0, 0, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-placeholder: #999;
+            --glass-icon: #ccc;
+            --header-bg: rgba(0, 0, 0, 0.8);
+            --mask-color: rgba(0, 0, 0, 0.85);
+            --bg-gradient: linear-gradient(-45deg, #190a32, #3c096c, #9d4edd, #240046);
+            --donor-tag-color: #ffd700;
+            --donor-tag-bg: rgba(255, 215, 0, 0.15);
+            --donor-tag-border: rgba(255, 215, 0, 0.4);
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .app-header {
+            flex: none;
+            position: relative;
+            z-index: 100;
+            width: 100%;
+            padding: 40px 20px 20px;
+            box-sizing: border-box;
+            text-align: center;
+            background: linear-gradient(to bottom, var(--header-bg) 0%, transparent 100%);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin: 0 0 8px;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-color);
+            opacity: 0.9;
+            margin: 0 0 8px;
+        }
+
+        .note-tip {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin: 0 0 20px;
+        }
+
+        .search-wrapper {
+            position: relative;
+            max-width: 380px;
+            margin: 0 auto;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            fill: var(--glass-icon);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            color: var(--text-color);
+        }
+
+        .search-input::placeholder {
+            color: var(--glass-placeholder);
+        }
+
+        .scroll-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 20px 150px;
+            text-align: center;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+        .scroll-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .name-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            font-size: 16px;
+            color: var(--text-color);
+            line-height: 2.2;
+            font-weight: 500;
+        }
+
+        .name-item {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            will-change: opacity, transform;
+        }
+
+        .name-item.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .name-item::after {
+            content: " / ";
+            color: var(--separator-color);
+            margin-left: 5px;
+        }
+
+        .name-item:last-child::after {
+            content: "";
+        }
+
+        .donor-tag {
+            display: inline-block;
+            font-size: 10px;
+            line-height: 1;
+            padding: 3px 6px;
+            margin-left: 6px;
+            margin-right: 2px;
+            border-radius: 4px;
+            color: var(--donor-tag-color);
+            background: var(--donor-tag-bg);
+            border: 1px solid var(--donor-tag-border);
+            vertical-align: text-bottom;
+            position: relative;
+            top: -1px;
+            font-weight: bold;
+        }
+
+        #no-result {
+            display: none;
+            color: var(--text-color);
+            font-size: 14px;
+            padding: 30px 0;
+            opacity: 0.8;
+        }
+
+        .bottom-mask {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 160px;
+            pointer-events: none;
+            z-index: 99;
+            background: linear-gradient(to bottom, transparent 20%, var(--mask-color) 100%);
+            backdrop-filter: blur(2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1 class="title">荣誉内测人员</h1>
+    <p class="subtitle">感谢你们的优质反馈，陪伴MiFan软件不断成长。</p>
+    <p class="note-tip">名单排名不分前后，赞助者者优先排前面</p>
+
+    <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+            <path d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0 0 11.6 0l43.6-43.5a8.2 8.2 0 0 0 0-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"/>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="搜索名单中的昵称..." autocomplete="off">
+    </div>
+</div>
+
+<div class="scroll-content">
+    <div id="no-result">未找到匹配的用户 🥺</div>
+    <div class="name-list" id="userList">
+
+        <!-- 捐赠者优先放置（后缀标签） -->
+        <span class="name-item">酷安@一般路过射命丸文 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@极乐先生 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@望心枝 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@憨憨的沃利贝尔 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@Snapdragon8Elte <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@彼岸花丿研 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@不吸烟的仓鼠 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@Sui碎梦 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@白菜gg <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@大火 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@嶙野烬 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@新霁 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@伊吹_萃香 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@清宵是对的233 <span class="donor-tag">赞助者</span></span>
+        <span class="name-item">酷安@nothing1337 <span class="donor-tag">赞助者</span></span>
+
+        <!-- 普通成员名单 -->
+        <span class="name-item">酷安@钱晨酱</span>
+        <span class="name-item">酷安@阿萨无声</span>
+        <span class="name-item">酷安@OVO0720</span>
+        <span class="name-item">酷安@李鬼Chase</span>
+        <span class="name-item">酷安@沐黎鸦青</span>
+        <span class="name-item">酷安@写语</span>
+        <span class="name-item">酷安@以重生之名</span>
+        <span class="name-item">酷安@KamiyamaShikik</span>
+        <span class="name-item">酷安@文爷</span>
+        <span class="name-item">酷安@茶叶叶wuu</span>
+        <span class="name-item">酷安@孤寡の瓜瓜</span>
+        <span class="name-item">酷安@起啥名字好112</span>
+        <span class="name-item">酷安@低碳雪糕红温了</span>
+        <span class="name-item">酷安@流火之萤</span>
+        <span class="name-item">酷安@我想送人头</span>
+        <span class="name-item">酷安@鱼kfk</span>
+        <span class="name-item">酷安@陆沉</span>
+        <span class="name-item">酷安@炸天帮胡歌</span>
+        <span class="name-item">酷安@薛定谔的藏獒</span>
+        <span class="name-item">酷安@tain666</span>
+        <span class="name-item">酷安@流浪猫23333</span>
+        <span class="name-item">酷安@温柔</span>
+        <span class="name-item">酷安@被温柔咬了一口</span>
+        <span class="name-item">酷安@Alone陌</span>
+        <span class="name-item">酷安@苏沐浅野</span>
+        <span class="name-item">酷安@独屿橙</span>
+        <span class="name-item">酷安@天空</span>
+        <span class="name-item">酷安@sjs</span>
+        <span class="name-item">酷安@就无缘到老</span>
+        <span class="name-item">酷安@Twilight_6</span>
+        <span class="name-item">酷安@放心用</span>
+        <span class="name-item">酷安@PTTsensi</span>
+        <span class="name-item">酷安@可爱蓝梁</span>
+        <span class="name-item">酷安@Suwa</span>
+        <span class="name-item">酷安@超级无敌柴郡酱</span>
+        <span class="name-item">酷安@大值雅</span>
+        <span class="name-item">酷安@空息</span>
+        <span class="name-item">酷安@輕音少女天国的大学篇</span>
+        <span class="name-item">酷安@Nomyyyy</span>
+    </div>
+</div>
+
+<div class="bottom-mask"></div>
+
+<script>
+    // ---------- 新增：外部调用主题更新 ----------
+    window.updateTheme = function(isDark) {
+        var root = document.documentElement;
+        if (isDark) {
+            root.classList.add('dark-mode');
+        } else {
+            root.classList.remove('dark-mode');
+        }
+    };
+
+    const searchInput = document.getElementById('searchInput');
+    const userList = document.getElementById('userList');
+    const noResult = document.getElementById('no-result');
+    const users = userList.getElementsByClassName('name-item');
+
+    searchInput.addEventListener('input', function() {
+        const keyword = this.value.trim().toLowerCase();
+        let foundCount = 0;
+
+        for (let i = 0; i < users.length; i++) {
+            const name = users[i].textContent.toLowerCase();
+            if (name.includes(keyword)) {
+                users[i].style.display = 'inline';
+                foundCount++;
+                users[i].classList.add('show');
+            } else {
+                users[i].style.display = 'none';
+            }
+        }
+
+        if (foundCount === 0) {
+            noResult.style.display = 'block';
+        } else {
+            noResult.style.display = 'none';
+        }
+
+        if (keyword === '') {
+            noResult.style.display = 'none';
+        }
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('show');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        root: document.querySelector('.scroll-content'),
+        threshold: 0.1
+    });
+
+    Array.from(users).forEach(user => {
+        observer.observe(user);
+    });
+</script>
+
+</body>
+</html>

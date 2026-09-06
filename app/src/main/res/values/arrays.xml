@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="refresh_time_options">
+        <item>0.5秒</item>
+        <item>1秒</item>
+        <item>1.5秒</item>
+        <item>2秒</item>
+    </string-array>
+</resources>

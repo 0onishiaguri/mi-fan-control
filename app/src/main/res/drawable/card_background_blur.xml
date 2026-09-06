@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- 半透明蒙层：浅色偏白、深色偏黑，配合模糊保证文字对比度 -->
+    <solid android:color="@color/card_blur_mask" />
+    <corners android:radius="16dp" />
+</shape>

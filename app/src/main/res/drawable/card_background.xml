@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 第一层：边缘高光效果（利用白色的渐变描边模拟顶部高光，边缘泛白） -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="28dp"/>
+            <!-- 顶部白色高光，底部浅白色，模拟光线从上方打下来的感觉 -->
+            <gradient
+                android:angle="270"
+                android:startColor="#80FFFFFF"
+                android:endColor="#20FFFFFF"
+                android:type="linear"/>
+        </shape>
+    </item>
+
+    <!-- 第二层：内部柔光玻璃主体 -->
+    <!-- 利用内边距 (inset) 留出外面一层作为高光边 -->
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp"/>
+            <!-- 颜色改为半透明白色，产生朦胧的玻璃感 -->
+            <solid android:color="@color/card_bg_blur"/>
+        </shape>
+    </item>
+
+</layer-list>

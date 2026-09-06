@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
+
+    <!-- 顶部标题 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="自定义按应用配置"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+    </LinearLayout>
+
+    <!-- 搜索栏（圆角背景，深浅色自动适配） -->
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:hint="搜索应用名称/包名"
+        android:textColorHint="@color/text_secondary"
+        android:background="@drawable/card_background"
+        android:tag="blue_card"
+        android:paddingHorizontal="16dp"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp" />
+
+    <!-- 显示系统应用开关 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="显示系统应用"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_show_system"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 应用列表（背景透明，每个条目自带卡片样式） -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_app_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@android:color/transparent"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp"
+        android:clipToPadding="false"/>
+</LinearLayout>

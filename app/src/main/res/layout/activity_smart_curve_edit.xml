@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
+
+    <!-- 顶部标题 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="自定义温度转速曲线"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="拖动节点或输入数值调整，支持导出/导入全局配置\n(本页面功能现为实验性功能，请谨慎调整数据和使用)"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- 模式切换（分段式控件） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:tag="blue_card"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="设置转速步进模式 :"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginEnd="10dp" />
+
+        <RadioGroup
+            android:id="@+id/rg_step_mode"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/card_background"
+            android:padding="4dp">
+
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rb_fixed_step"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="全局固定步进"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:button="@null"
+                android:background="@drawable/mode_selector"
+                android:padding="8dp"
+                android:gravity="center" />
+
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/rb_interval_step"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="全局区间步进"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:button="@null"
+                android:background="@drawable/mode_selector"
+                android:padding="8dp"
+                android:gravity="center" />
+        </RadioGroup>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="40dp">
+
+            <!-- 卡片1：曲线图与区间配置区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/card_background"
+                android:padding="16dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:tag="blue_card">
+
+                <!-- 左侧曲线图区域：宽度不变150dp，高度变为 match_parent 占满右侧高度 -->
+                <LinearLayout
+                    android:layout_width="155dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center">
+                    <com.fan.widget.SmartCurveEditView
+                        android:id="@+id/curve_edit_view"
+                        android:layout_width="150dp"
+                        android:layout_height="match_parent" />
+                </LinearLayout>
+
+                <!-- 右侧配置区 -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="根据温度区间配置步进值"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="2dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="温度范围 30~99℃ | 步进值范围 1~20"
+                        android:textSize="10sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- 区间1 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="4dp">
+                        <EditText android:id="@+id/et_interval1_low" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="起始温" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="~" android:textColor="@color/text_secondary" />
+                        <EditText android:id="@+id/et_interval1_high" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="目标温" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                        <EditText android:id="@+id/et_interval1_step" android:layout_width="0dp" android:layout_weight="0.8" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="步进值" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                    </LinearLayout>
+
+                    <!-- 区间2 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="4dp">
+                        <EditText android:id="@+id/et_interval2_low" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="起始温" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="~" android:textColor="@color/text_secondary" />
+                        <EditText android:id="@+id/et_interval2_high" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="目标温" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                        <EditText android:id="@+id/et_interval2_step" android:layout_width="0dp" android:layout_weight="0.8" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="步进值" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                    </LinearLayout>
+
+                    <!-- 区间3 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <EditText android:id="@+id/et_interval3_low" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="起始温" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="~" android:textColor="@color/text_secondary" />
+                        <EditText android:id="@+id/et_interval3_high" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="目标温" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                        <EditText android:id="@+id/et_interval3_step" android:layout_width="0dp" android:layout_weight="0.8" android:layout_height="wrap_content" android:background="@drawable/bg_input_box" android:inputType="number" android:maxLength="2" android:hint="步进值" android:textSize="10sp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" android:padding="6dp" />
+                    </LinearLayout>
+
+                    <!-- 全局步进值 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="10dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="全局步进值："
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"/>
+
+                        <EditText
+                            android:id="@+id/et_fixed_step"
+                            android:layout_width="40dp"
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_input_box"
+                            android:inputType="number"
+                            android:maxLength="2"
+                            android:text="5"
+                            android:textSize="14sp"
+                            android:gravity="center"
+                            android:textColor="@color/text_primary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=" (1~20)"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_secondary" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 卡片2：节点输入区 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_background"
+                android:tag="blue_card"
+                android:padding="16dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="自定义节点参数(温度:30-99℃,转速:0-99%)"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- 第1行：节点1-2 -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_1" android:layout_width="0dp" android:layout_weight="1" />
+                    <View android:layout_width="8dp" android:layout_height="1dp" />
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_2" android:layout_width="0dp" android:layout_weight="1" />
+                </LinearLayout>
+
+                <!-- 第2行：节点3-4 -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_3" android:layout_width="0dp" android:layout_weight="1" />
+                    <View android:layout_width="8dp" android:layout_height="1dp" />
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_4" android:layout_width="0dp" android:layout_weight="1" />
+                </LinearLayout>
+
+                <!-- 第3行：节点5-6 -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_5" android:layout_width="0dp" android:layout_weight="1" />
+                    <View android:layout_width="8dp" android:layout_height="1dp" />
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_6" android:layout_width="0dp" android:layout_weight="1" />
+                </LinearLayout>
+
+                <!-- 第4行：节点7-8 -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_7" android:layout_width="0dp" android:layout_weight="1" />
+                    <View android:layout_width="8dp" android:layout_height="1dp" />
+                    <include layout="@layout/item_curve_point" android:id="@+id/point_8" android:layout_width="0dp" android:layout_weight="1" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 双按钮组：恢复默认 / 保存配置 (去阴影) -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingHorizontal="16dp" android:layout_marginTop="16dp">
+                <Button android:id="@+id/btn_reset_curve" android:layout_width="0dp" android:layout_height="44dp" android:layout_marginEnd="8dp" android:layout_weight="1" android:background="@drawable/bg_input_box" android:text="恢复默认" android:textColor="@color/text_primary"
+                    android:stateListAnimator="@null" android:elevation="0dp" />
+                <Button android:id="@+id/btn_save_curve" android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1" android:text="保存配置" android:background="@drawable/bg_input_box" android:textColor="@color/text_primary" android:layout_marginStart="8dp"
+                    android:stateListAnimator="@null" android:elevation="0dp" />
+            </LinearLayout>
+
+            <!-- 双按钮组：导出配置 / 导入配置 (去阴影) -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingHorizontal="16dp" android:layout_marginTop="8dp">
+                <Button android:id="@+id/btn_export_config" android:layout_width="0dp" android:layout_height="44dp" android:layout_marginEnd="8dp" android:layout_weight="1" android:background="@drawable/bg_input_box" android:text="导出配置" android:textColor="@color/text_primary"
+                    android:stateListAnimator="@null" android:elevation="0dp" />
+                <Button android:id="@+id/btn_import_config" android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1" android:background="@drawable/bg_input_box" android:text="导入配置" android:textColor="@color/text_primary" android:layout_marginStart="8dp"
+                    android:stateListAnimator="@null" android:elevation="0dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

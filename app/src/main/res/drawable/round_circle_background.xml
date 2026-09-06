@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 最外层：白色光晕（模拟边缘泛光） -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#66FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- 第二层：深色细边（增加立体感） -->
+    <item
+        android:top="2dp"
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp">
+        <shape android:shape="oval">
+            <solid android:color="#00000000" />
+            <stroke
+                android:width="1dp"
+                android:color="#80000000" />
+        </shape>
+    </item>
+
+    <!-- 最内层：顶部渐变高光（模拟光源） -->
+    <item
+        android:top="3dp"
+        android:bottom="3dp"
+        android:left="3dp"
+        android:right="3dp">
+        <shape android:shape="oval">
+            <solid android:color="#00000000" />
+            <gradient
+                android:angle="270"
+                android:startColor="#33FFFFFF"
+                android:centerColor="#00000000"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+</layer-list>

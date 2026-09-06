@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Mi FanWidget</string>
+    <string name="accessibility_desc">开启后可提升应用后台保活稳定性，不会采集任何屏幕内容与个人数据</string>
+</resources>

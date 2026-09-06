@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>完整用户协议</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333333;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #222222;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+        h2 {
+            color: #333333;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 28px;
+            margin-bottom: 16px;
+            border-left: 5px solid #2196F3;
+            padding-left: 10px;
+            background-color: #f0f8ff;
+            line-height: 1.4;
+        }
+        h3 {
+            color: #444444;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        p {
+            margin-bottom: 16px;
+            text-align: justify;
+            color: #444444;
+        }
+        ul {
+            padding-left: 20px;
+            margin-bottom: 16px;
+            color: #444444;
+        }
+        li {
+            margin-bottom: 12px;
+        }
+        .highlight {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            color: #888888;
+            font-size: 14px;
+            margin-top: 30px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>关于本风扇控制软件的使用须知及免责声明</h1>
+
+    <h2>一、前言</h2>
+    <p>本软件为安卓散热风扇自定义调速、动画可视化、系统风扇联动调试的个人开发第三方工具类软件，非官方系统配套软件，因此在使用过程中可能出现一些无法避免的问题。</p>
+    <p>本软件通过获取Root权限读取、修改设备底层散热风扇硬件配置文件，实现自定义风扇转速、档位控制、温控曲线调节、控制中心联调、桌面小组件控制、通知中心控制等拓展功能，在使用本软件全部功能前，请您认真阅读并完全知晓本须知与免责声明。</p>
+    <p><strong>您的下载、安装、运行、使用软件行为，即代表您已自愿阅读、理解并同意本声明全部条款。若不认可，请立即卸载本软件并停止一切使用行为。</strong></p>
+
+    <h2>二、用户使用须知</h2>
+    <h3>1. 关于Root权限</h3>
+    <p>本软件核心调速功能、底层控制功能必须依赖设备Root权限方可正常使用，请您自行寻找方法给设备获取root权限后，再使用本软件。</p>
+    <p>Root属于安卓系统最高权限模式，开启Root后设备系统安全机制、权限管控机制会被突破。</p>
+    <p>用户自愿自行承担Root设备带来的一切前置风险，本软件仅作为权限调用工具，不参与、不引导、不提供Root破解、刷机、解锁Bootloader相关服务。</p>
+
+    <h3>2. 关于底层硬件文件修改</h3>
+    <p>本软件工作原理为：读取设备 /sys 目录下风扇温控、转速、硬件节点文件，通过指令读写、覆写参数，实现自定义风扇调速、静音、高速、狂暴档位、智能温控等功能。</p>
+    <p>本软件会修改系统原厂预设的风扇温控策略、转速阈值、温控曲线，与设备官方默认温控逻辑存在差异。</p>
+
+    <h3>3. 关于设备性能与发热</h3>
+    <ul>
+        <li><strong>自定义低转速/静止档位：</strong>可能导致设备散热不足、温度累积、游戏/高负载场景机身发烫、降频卡顿。</li>
+        <li><strong>自定义高转速/狂暴档位：</strong>可能导致风扇高频运转、风扇噪音增大、风扇耗电增加、风扇机械磨损加剧，降低散热风扇硬件设计寿命。</li>
+        <li><strong>智能温控曲线自定义：</strong>用户自行设置参数不当可能造成温控逻辑异常，设置可能造成风扇硬件损坏。</li>
+    </ul>
+
+    <h3>4. 关于系统冲突与兼容性</h3>
+    <p>本软件支持HyperOS等定制系统的风扇联调，可与系统控制中心风扇模式联动调试。</p>
+    <p>系统OTA更新、安全策略升级、底层节点变更可能导致本软件功能失效、报错、动画异常、调速无效，属于正常兼容问题。</p>
+
+    <h3>5. 关于软件功能特性</h3>
+    <p>本软件包含桌面2×2，4×2风扇控制小组件、实时转速温度监控、可视化风扇动画、后台持续监测、模式切换等拓展功能。</p>
+    <p>通知栏控制功能、桌面小组件功能、UI动画依赖系统后台刷新机制，受系统省电策略、后台冻结、杀后台机制影响，可能出现暂停、卡顿、刷新延迟，不属于软件BUG。</p>
+
+    <h3>6. 禁止使用场景</h3>
+    <ul>
+        <li>严禁在未授权设备、公共设备、商用设备、涉密设备上使用本软件。</li>
+        <li>严禁利用本软件进行逆向、篡改、打包、二次分发、商业售卖等行为。</li>
+        <li>严禁恶意设置极端温控参数导致设备超负荷运行。</li>
+    </ul>
+
+    <h2>三、免责声明</h2>
+    <h3>1. 风险自愿承担</h3>
+    <p>本软件为个人免费开源工具，仅供个人学习、研究、娱乐使用。所有硬件读写、参数修改、风扇调速操作均由用户自主触发、自主确认。</p>
+    <p>用户明确知晓：自定义修改底层风扇参数，脱离官方温控保护策略，一切风险由用户本人全权承担。</p>
+
+    <h3>2. 硬件损坏免责</h3>
+    <p>因用户使用本软件参数设置不当、长期超频高转、长期低转积热、系统冲突、OTA兼容问题导致的：</p>
+    <ul>
+        <li>设备风扇异响、风扇故障、硬件老化。</li>
+        <li>主板过热、设备降频、死机、重启。</li>
+        <li>硬件损坏等一切后果，本软件作者不承担任何保修、赔偿、修复责任。</li>
+    </ul>
+
+    <h3>3. 系统风险免责</h3>
+    <p>Root设备本身存在系统稳定性、安全性风险，因Root权限、底层文件修改导致的：系统报错、功能异常、OTA升级失败、保修失效、系统崩溃、数据丢失等问题，均与本软件作者无关。</p>
+
+    <h3>4. 数据免责</h3>
+    <p>本软件不联网、不上传、不收集用户任何隐私数据、设备信息、使用日志。因用户设备自身原因造成的数据丢失、隐私泄露，作者不承担责任。</p>
+
+    <h3>5. 无担保声明</h3>
+    <p>本软件按现状提供，不提供任何明示或暗示的功能担保、稳定性担保、兼容性担保。作者不对软件功能永久可用、无BUG、适配所有设备作出承诺，保留随时更新、迭代、停更、下架的权利。</p>
+
+    <h3>6. 禁止追责</h3>
+    <p><strong>用户承诺：自愿使用本软件，绝不因软件使用问题、设备问题、系统问题向作者追责、索赔、投诉。</strong></p>
+
+    <h2>四、最终说明</h2>
+    <ul>
+        <li>本声明适用于软件所有版本（测试版、正式版、迭代版）。</li>
+        <li>作者保留随时修改、更新本使用须知与免责声明的权利，更新后生效，无需单独通知。</li>
+        <li>若其中任意条款被判定无效，剩余条款依然完全生效。</li>
+    </ul>
+
+    <p class="highlight">再次提示：理性使用温控调速功能，适度自定义参数，爱护个人设备硬件寿命。</p>
+
+    <div class="footer">MiFan Control</div>
+</div>
+</body>
+</html>

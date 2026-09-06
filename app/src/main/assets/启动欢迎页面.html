@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MiFan Control</title>
+    <style>
+        /* 基础变量：浅色主题（默认） */
+        :root {
+            --page-bg: #f8f7fc;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --card-border: 1px solid transparent;
+            --text-main: #333333;
+            --text-sub: #666666;
+            --text-title: #7c3aed;
+            --highlight: #dc2626;
+            --border-color: #e5e7eb;
+            --input-bg: #ffffff;
+            --input-border: #d1d5db;
+            --ripple-bg: #f8f7fc;
+            --scrollbar-thumb: #cbd5e1;
+        }
+
+        /* 深色主题类，由 JS 动态添加/移除 */
+        .dark-mode {
+            --page-bg: #0f0f13;
+            --card-bg: rgba(34, 34, 44, 0.97);
+            --card-border: 1px solid rgba(255, 255, 255, 0.15);
+            --text-main: #dddddd;
+            --text-sub: #b0b0b0;
+            --text-title: #d8b4fe;
+            --highlight: #ff4d4f;
+            --border-color: #444;
+            --input-bg: #2a2a35;
+            --input-border: #666;
+            --ripple-bg: #0f0f13;
+            --scrollbar-thumb: #777;
+        }
+
+        /* 以下所有样式保持不变，但均使用 CSS 变量，自动适配 */
+        body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; background: var(--page-bg); -webkit-tap-highlight-color: transparent; }
+        #page-welcome { position: fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:1; overflow:hidden; background:linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size:400% 400%; animation:gradientFlow 10s linear infinite; clip-path:circle(0px at 50% 50%); transition:clip-path 0.9s cubic-bezier(0.645, 0.045, 0.355, 1); will-change:clip-path; }
+        @keyframes gradientFlow { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+        #page-welcome.start-animation { clip-path:circle(150% at 50% 50%); }
+        .welcome-content { position:relative; z-index:5; display:flex; flex-direction:column; justify-content:center; align-items:center; width:100%; height:100%; opacity:0; transform:translateY(20px); transition:opacity 0.6s ease, transform 0.6s ease; will-change:transform, opacity; }
+        #page-welcome.start-animation .welcome-content { opacity:1; transform:translateY(0); transition-delay:0.4s; }
+        .logo { width:110px; height:110px; background-color:transparent; border:none; border-radius:0; box-shadow:none; display:flex; justify-content:center; align-items:center; margin-bottom:20px; overflow:visible; }
+        .logo-img { width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 10px 15px rgba(0,0,0,0.2)); }
+        h1 { font-size:36px; margin:0 0 10px 0; font-weight:800; color:#fff; letter-spacing:1px; text-shadow:0 4px 10px rgba(0,0,0,0.3); }
+        p.welcome-text { font-size:18px; margin:0; font-weight:500; color:#fff; opacity:0.9; text-shadow:0 2px 5px rgba(0,0,0,0.3); }
+        .arrow-btn { width:60px; height:60px; background-color:rgba(255,255,255,0.2); border:2px solid rgba(255,255,255,0.9); border-radius:50%; appearance:none; -webkit-appearance:none; outline:none; cursor:pointer; display:flex; justify-content:center; align-items:center; box-shadow:0 5px 15px rgba(0,0,0,0.3); position:absolute; bottom:12vh; opacity:0; transform:translateY(20px); transition:transform 0.2s, background-color 0.2s, opacity 0.5s ease, transform 0.5s ease; z-index:20; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; will-change:transform, opacity; }
+        #page-welcome.start-animation .arrow-btn { opacity:1; transform:translateY(0); transition-delay:0.5s; }
+        .arrow-btn:active { transform:scale(0.9); background-color:rgba(255,255,255,0.9); }
+        #ripple { position:fixed; inset:0; background-color:var(--ripple-bg); z-index:2; pointer-events:none; clip-path:circle(0px at var(--x,50%) var(--y,50%)); transition:clip-path 0.7s cubic-bezier(0.645,0.045,0.355,1); will-change:clip-path; }
+        #ripple.expand { clip-path:circle(150% at var(--x,50%) var(--y,50%)); }
+        #page-agreement { background:var(--card-bg); border-radius:20px; border:var(--card-border); width:calc(100% - 48px); max-width:400px; height:82vh; height:82dvh; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); padding:20px; box-sizing:border-box; color:var(--text-main); display:flex; flex-direction:column; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) translateY(60px) scale(0.9); opacity:0; visibility:hidden; z-index:10; transition:transform 0.6s cubic-bezier(0.175,0.885,0.32,1.275) 0.1s, opacity 0.4s ease 0.1s, visibility 0s linear 0.7s; will-change:transform, opacity; }
+        #page-agreement.show { transform:translate(-50%,-50%) translateY(0) scale(1); opacity:1; visibility:visible; transition:transform 0.6s cubic-bezier(0.175,0.885,0.32,1.275) 0.1s, opacity 0.4s ease 0.1s, visibility 0s; }
+        .agree-header { text-align:center; margin-bottom:15px; flex-shrink:0; border-bottom:1px solid var(--border-color); padding-bottom:10px; }
+        .agree-header h2 { margin:0 0 5px 0; color:var(--text-title); font-size:24px; font-weight:bold; }
+        .agree-header p { margin:0; font-size:13px; color:var(--text-sub); }
+        .scroll-content { flex:1; overflow-y:auto; margin-bottom:5px; padding:0 5px; }
+        .scroll-content::-webkit-scrollbar { width:4px; }
+        .scroll-content::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:4px; }
+        .section-title { font-size:16px; font-weight:bold; color:var(--text-title); margin-bottom:12px; border-left:4px solid #a855f7; padding-left:10px; margin-top:20px; }
+        .section-content { font-size:13px; line-height:1.8; color:var(--text-main); margin-bottom:15px; padding-left:14px; padding-right:5px; }
+        .highlight-text { color:var(--highlight); font-weight:bold; }
+        .countdown-tip { font-size:14px; color:#fbbf24; margin-bottom:15px; font-weight:bold; }
+        .agree-tip { font-size:13px; color:var(--text-sub); margin-bottom:10px; font-weight:bold; }
+        .captcha-box { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:20px; }
+        .captcha-display { background:var(--input-bg); border:1px solid var(--input-border); color:var(--text-main); padding:5px 10px; border-radius:5px; font-size:18px; font-weight:bold; letter-spacing:4px; cursor:pointer; user-select:none; }
+        .captcha-input { background:var(--input-bg); border:1px solid var(--input-border); color:var(--text-main); border-radius:5px; padding:8px; width:80px; text-align:center; font-size:18px; outline:none; }
+        .captcha-input.error { border-color:#ef4444; }
+        .start-btn { width:100%; height:50px; background-color:#7c3aed; color:#fff; border:none; border-radius:25px; font-size:18px; font-weight:bold; cursor:pointer; margin-top:10px; transition:background-color 0.3s; -webkit-tap-highlight-color:transparent; }
+        .disabled-footer { opacity:0.5; pointer-events:none; }
+        .start-btn:disabled { background-color:var(--border-color); color:var(--text-sub); cursor:not-allowed; }
+        .start-btn:active:not(:disabled) { transform:scale(0.98); }
+    </style>
+</head>
+<body>
+<!-- 欢迎页面 -->
+<div id="page-welcome">
+    <div class="welcome-content">
+        <div class="logo">
+            <img src="my_logo.png" class="logo-img" alt="MiFan Logo">
+        </div>
+        <h1>MiFan Control</h1>
+        <p class="welcome-text">欢迎使用</p>
+        <div class="arrow-btn" id="arrowBtn" onclick="expandToAgreement(event)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<div id="ripple"></div>
+
+<div id="page-agreement">
+    <div class="agree-header">
+        <h2>软件使用须知</h2>
+        <p>请仔细阅读以下免责声明及注意事项</p>
+    </div>
+    <div class="scroll-content">
+        <div class="section-title">一、前言</div>
+        <div class="section-content">本软件为安卓散热风扇自定义调速、动画可视化、系统风扇联动调试的<span class="highlight-text">个人开发第三方工具类软件，非官方系统配套软件</span>，因此在使用过程中可能出现一些无法避免的问题。</div>
+        <div class="section-title">二、用户使用须知</div>
+        <div class="section-content">1. 关于Root权限：核心调速功能必须依赖Root权限，Root属于安卓系统最高权限，开启后会突破设备系统安全机制。用户需<span class="highlight-text">自行承担Root带来的一切前置风险。</span><br><br>2. 关于底层硬件文件修改：软件会读取 /sys 目录下风扇温控节点，通过写入指令覆写原厂预设的风扇温控策略。<br><br>3. 关于设备性能与发热：低转速可能导致积热降频；高转速可能导致噪音、耗电增加及<span class="highlight-text">机械磨损和硬件损坏</span>；自定义温控曲线不当可能造成硬件损坏。<br><br>4. 关于系统冲突与兼容性：支持HyperOS等定制系统，系统OTA更新或安全策略升级可能导致<span class="highlight-text">功能失效、报错，属于正常兼容问题。</span><br><br>5. 关于软件功能特性：包含桌面2×2/4×2小组件、实时监测、可视化动画、通知栏控制，受系统杀后台机制影响可能出现刷新延迟。<br><br>6. 禁止使用场景：严禁在未授权、公共、商用、涉密设备上使用。严禁进行逆向、篡改、打包、二次分发或商业售卖。严禁设置极端参数导致超负荷运行。</div>
+        <div class="section-title">三、免责声明</div>
+        <div class="section-content">1. 风险自愿承担：本软件为个人免费开源工具，仅供学习研究。一切硬件修改均由用户自主触发，风险由本人全权承担。<br><br>2. 硬件损坏免责：因设置不当导致的<span class="highlight-text">风扇异响、故障、主板过热、降频死机等，作者不承担任何保修赔偿修复责任。</span><br><br>3. 系统风险免责：因Root导致的<span class="highlight-text">系统报错、功能异常、OTA失败、保修失效、系统崩溃、数据丢失</span>等问题，均与作者无关。<br><br>4. 数据免责：本软件不联网、不上传、不收集任何隐私数据，因用户设备自身原因造成的数据丢失，作者不承担责任。<br><br>5. 无担保声明：软件按现状提供，不提供任何功能、稳定性、兼容性担保。作者保留随时更新、停更、下架的权利。<br><br>6. 禁止追责：用户承诺自愿使用，<span class="highlight-text">绝不因软件使用问题、设备问题、系统问题向作者追责、索赔、投诉。</span></div>
+        <div class="section-title">四、最终说明</div>
+        <div class="section-content">本声明适用于所有版本，作者保留修改本声明的权利。若其中任意条款被判定无效，剩余条款依然完全生效。<br><br>再次温馨提示：<b>理性使用温控调速功能，适度自定义参数，爱护个人设备硬件寿命。</b></div>
+        <div class="agree-footer">
+            <div class="countdown-tip" id="countdownText">安全提示：请阅读须知，等待 5 秒后可开始使用</div>
+            <div id="inputContainer" class="disabled-footer">
+                <div class="agree-tip">输入验证码开始使用，即代表您同意该用户使用须知</div>
+                <div class="captcha-box">
+                    <div class="captcha-display" id="captchaCode" onclick="generateCaptcha()">----</div>
+                    <input type="text" id="captchaInput" class="captcha-input" maxlength="4" placeholder="输入">
+                </div>
+                <button class="start-btn" id="startBtn" disabled onclick="startApp()">请等待...</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let countdownTimer = null;
+    let isAnimating = false;
+
+    window.onload = () => {
+        setTimeout(() => {
+            document.getElementById('page-welcome').classList.add('start-animation');
+        }, 100);
+    };
+
+    // ---------- 新增：外部调用主题更新 ----------
+    window.updateTheme = function(isDark) {
+        var root = document.documentElement;
+        if (isDark) {
+            root.classList.add('dark-mode');
+        } else {
+            root.classList.remove('dark-mode');
+        }
+    };
+
+    function generateCaptcha() {
+        const code = Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('captchaCode').innerText = code;
+        document.getElementById('captchaInput').value = '';
+        document.getElementById('captchaInput').classList.remove('error');
+    }
+
+    function expandToAgreement(event) {
+        if (isAnimating) return;
+        isAnimating = true;
+        const x = event.clientX;
+        const y = event.clientY;
+        const ripple = document.getElementById('ripple');
+        ripple.style.setProperty('--x', x + 'px');
+        ripple.style.setProperty('--y', y + 'px');
+        document.getElementById('page-welcome').style.opacity = '0';
+        ripple.classList.remove('expand');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                ripple.classList.add('expand');
+            });
+        });
+        setTimeout(() => {
+            const agreePage = document.getElementById('page-agreement');
+            agreePage.classList.add('show');
+            document.querySelector('.scroll-content').scrollTop = 0;
+            generateCaptcha();
+            startCountdown();
+        }, 450);
+        setTimeout(() => {
+            isAnimating = false;
+        }, 1200);
+    }
+
+    function startCountdown() {
+        if (countdownTimer) clearInterval(countdownTimer);
+        const countdownText = document.getElementById('countdownText');
+        const inputContainer = document.getElementById('inputContainer');
+        const startBtn = document.getElementById('startBtn');
+        let timeLeft = 5;
+        inputContainer.classList.add('disabled-footer');
+        startBtn.disabled = true;
+        startBtn.innerText = "请等待...";
+        countdownText.innerText = `安全提示：请阅读须知，等待 ${timeLeft} 秒后可开始使用`;
+        countdownTimer = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                countdownText.innerText = `安全提示：请阅读须知，等待 ${timeLeft} 秒后可开始使用`;
+            } else {
+                clearInterval(countdownTimer);
+                inputContainer.classList.remove('disabled-footer');
+                startBtn.disabled = false;
+                startBtn.innerText = "开始使用";
+                countdownText.innerText = "您已阅读完毕，请确认下方验证码。";
+                generateCaptcha();
+            }
+        }, 1000);
+    }
+
+    function startApp() {
+        if (document.getElementById('startBtn').disabled) return;
+        var input = document.getElementById('captchaInput');
+        var currentCode = document.getElementById('captchaCode').innerText;
+        if (input.value === currentCode) {
+            if (window.MiFanInterface) {
+                window.MiFanInterface.startMainActivity();
+            }
+            window.location.href = "mifan://start";
+        } else {
+            input.classList.add('error');
+            input.value = '';
+            input.placeholder = "验证码错误";
+            generateCaptcha();
+        }
+    }
+</script>
+</body>
+</html>

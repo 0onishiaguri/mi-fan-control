@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/card_background"
+    android:clipToOutline="true"
+    android:padding="16dp"
+    android:layout_marginBottom="12dp"
+    android:tag="blur_card">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tv_log_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="INFO"
+            android:textColor="#2E7D32"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/log_tag_bg"/>
+
+        <TextView
+            android:id="@+id/tv_log_source"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="MiFanControl"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginStart="10dp"/>
+
+        <TextView
+            android:id="@+id/tv_log_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="07-30 02:48:42"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_log_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="日志内容"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:layout_marginTop="8dp"
+        android:lineSpacingExtra="2dp"/>
+
+</LinearLayout>

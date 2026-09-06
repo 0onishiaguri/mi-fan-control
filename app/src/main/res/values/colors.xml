@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="text_main">#000000</color>
+    <color name="text_orange">#FF9500</color>
+    <color name="text_blue">#0066FF</color>
+    <color name="divider_line">#B8BEC8</color>
+    <color name="btn_fast">#FFAA22</color>
+    <color name="btn_rage">#E6212A</color>
+    <color name="btn_silent">#2288FF</color>
+    <color name="btn_close">#B0B4BA</color>
+    <color name="btn_text_white">#FFFFFF</color>
+    <color name="bg_primary">#F5F7FA</color>
+    <color name="card_bg_blur">#99FFFFFF</color>
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#888888</color>
+    <color name="success">#10B981</color>
+    <color name="error">#F44336</color>
+    <color name="divider">#EEEEEE</color>
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="white">#FFFFFF</color>
+    <color name="colorSurface">#FFFFFF</color> <!-- 弹窗背景 浅色白 -->
+    <color name="colorOnSurface">#111111</color> <!-- 文字 黑色 -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="curve_grid">#1A1A1A</color>
+    <color name="curve_axis_text">#111111</color>
+    <color name="card_blur_mask">#E6FFFFFF</color>
+    <!-- 悬浮底栏 浅色模式 -->
+    <color name="bottom_nav_mask">#E0FFFFFF</color>
+    <color name="bottom_nav_stroke">#1A000000</color>
+    <!-- 顶部栏 浅色模式 -->
+    <color name="top_bar_mask">#99FFFFFF</color>
+    <color name="top_bar_stroke">#1A000000</color>
+    <color name="card_highlight">#40FFFFFF</color>   <!-- 25% 不透明度的白色 -->
+
+</resources>

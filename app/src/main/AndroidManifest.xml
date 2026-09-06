@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.fan.widget">
+
+    <!-- ========== 基础权限 ========== -->
+    <!-- 前台服务（必需） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- 唤醒锁（防止CPU休眠） -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 通知（Android 13+ 必需） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 电池优化白名单申请 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- 开机自启动 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- 使用情况访问（前台应用检测） -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- ========== 查询范围限制（替代 QUERY_ALL_PACKAGES） ========== -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <!-- ========== 应用配置 ========== -->
+    <application
+        android:name=".FanApp"
+        android:icon="@mipmap/ic_launcher"
+        android:label="MiFan Control"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FanWidget">
+
+        <!-- 启动页（首次使用） -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:configChanges="orientation|screenSize|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 主界面（非启动入口） -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- 智能曲线编辑 -->
+        <activity
+            android:name=".SmartCurveEditActivity"
+            android:exported="false"
+            android:configChanges="uiMode"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".WebViewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:configChanges="uiMode" />
+
+        <!-- 应用自定义配置 -->
+        <activity
+            android:name=".AppCustomConfigActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <!-- 日志查看器 -->
+        <activity
+            android:name=".LogViewerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <!-- 个性化设置页面 -->
+        <activity android:name=".AdvancedSettingsActivity" />
+
+        <!-- 必要权限获取页面 -->
+        <activity android:name=".PermissionDetailActivity" />
+
+        <!-- 桌面小组件 -->
+        <receiver
+            android:name=".FanWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="FAN_OFF" />
+                <action android:name="FAN_SILENT" />
+                <action android:name="FAN_FAST" />
+                <action android:name="FAN_ON" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/fan_widget_info" />
+        </receiver>
+
+        <!-- 开机自启动 -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 后台刷新服务 -->
+        <service
+            android:name=".FanRefreshService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Fan hardware temperature and speed monitoring" />
+        </service>
+
+        <!-- 无障碍保活服务 -->
+        <service
+            android:name=".FanAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+    </application>
+</manifest>

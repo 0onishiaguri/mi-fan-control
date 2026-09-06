@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="SpinnerDropItem">
+        <item name="android:layout">@layout/spinner_drop_item</item>
+    </style>
+
+    <style name="AppSpinnerStyle" parent="Widget.AppCompat.Spinner">
+        <item name="android:popupBackground">@drawable/spinner_drop_bg</item>
+        <item name="android:elevation">12dp</item>
+        <item name="popupTheme">@style/SpinnerPopupLight</item>
+    </style>
+
+    <style name="SpinnerPopupLight" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:dropDownListViewStyle">@style/SpinnerDropItem</item>
+        <item name="android:windowBackground">@drawable/spinner_drop_bg</item>
+    </style>
+
+    <style name="RoundDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:background">@drawable/bg_dialog_round</item>
+        <item name="android:windowMinWidthMinor">85%</item>
+    </style>
+</resources>

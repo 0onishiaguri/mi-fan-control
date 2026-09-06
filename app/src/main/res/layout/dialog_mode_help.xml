@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_card"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="控制模式说明"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 直接使用 TextView，高度自适应 -->
+    <TextView
+        android:id="@+id/tv_mode_help_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp"
+        android:lineSpacingExtra="4dp" />
+
+    <TextView
+        android:id="@+id/btn_mode_help_ok"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="明白了"
+        android:textColor="#2D7DFF"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:padding="12dp"
+        android:layout_marginTop="12dp" />
+</LinearLayout>

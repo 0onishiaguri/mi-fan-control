@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/card_background"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageView
+        android:id="@+id/iv_support_qr"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:contentDescription="赞赏码"
+        android:scaleType="fitCenter"
+        android:src="@drawable/support_qr_code" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:text="非常感谢您的赞赏和支持,赞赏时请备注您的酷安名字,格式为：酷安@XXXX,每次版本更新时都会更新感谢名单,作者祝您生活愉快，万事顺利！"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp" />
+
+</LinearLayout>

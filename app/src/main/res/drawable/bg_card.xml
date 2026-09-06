@@ -1,0 +1,4 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FFFFFF" /> <!-- 浅色请设为 #FFFFFF，深色请设为 #1E1E1E，需在colors.xml定义 -->
+    <corners android:radius="16dp" />
+</shape>
