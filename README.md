@@ -15,6 +15,16 @@ MiFan Control 是一个针对 **REDMI K90 Ultra / K90 Max（HyperOS 3.0\4.0）**
 
 ---
 
+## 📱 界面预览
+
+| 深度调速 · 主界面 | 深度订制 · 按应用配置 & 温度曲线 |
+|:---:|:---:|
+| <img src="docs/screenshots/home.png" width="250" alt="主界面：实时温度/转速/快捷档位"/> | <img src="docs/screenshots/custom.png" width="250" alt="按应用配置与智能温控曲线编辑"/> |
+| **实时控制 · 通知栏** | **自定义温度读取节点** |
+| <img src="docs/screenshots/notify.png" width="250" alt="通知栏实时控制风扇"/> | <img src="docs/screenshots/temp_node.png" width="250" alt="多温度节点自由切换"/> |
+
+---
+
 ## 功能特性
 
 ### 🎛️ 四大控制模式
