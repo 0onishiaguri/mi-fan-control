@@ -124,6 +124,17 @@ app/
 
 ---
 
+## 🙏 贡献者
+
+感谢以下开发者对本项目的支持与贡献：
+
+| 头像 | 贡献者 | 主页 |
+|:---:|---|---|
+| <img src="https://github.com/Yunnijian.png" width="32" height="32" alt="Yunnijian"/> | **Yunnijian** | https://github.com/Yunnijian |
+| <img src="https://github.com/SiberiaApp.png" width="32" height="32" alt="SiberiaApp"/> | **SiberiaApp** | https://github.com/SiberiaApp |
+
+---
+
 ## 开源协议
 
 本项目基于 [MIT License](LICENSE) 开源，欢迎 Fork、Issue 与 PR。
