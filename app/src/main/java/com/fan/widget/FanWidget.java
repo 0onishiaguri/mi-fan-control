@@ -5,6 +5,8 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.provider.Settings;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.RemoteViews;
@@ -19,6 +21,7 @@ public class FanWidget extends AppWidgetProvider {
     public static final String ACTION_SILENT = "FAN_SILENT";
     public static final String ACTION_FAST = "FAN_FAST";
     public static final String ACTION_ON = "FAN_ON";
+    public static final String ACTION_FLOAT_TOGGLE = "FAN_FLOAT_TOGGLE";
 
     // PendingIntent request codes
     private static final int REQUEST_OFF = 5001;
@@ -26,6 +29,7 @@ public class FanWidget extends AppWidgetProvider {
     private static final int REQUEST_FAST = 5003;
     private static final int REQUEST_ON = 5004;
     private static final int REQUEST_OPEN_APP = 5005; // 新增
+    private static final int REQUEST_FLOAT = 5006;     // 悬浮窗开关
 
     // 单线程池处理点击任务，避免阻塞广播
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
@@ -102,6 +106,12 @@ public class FanWidget extends AppWidgetProvider {
             return;
         }
 
+        // 处理悬浮窗开关（通知栏按钮）
+        if (ACTION_FLOAT_TOGGLE.equals(action)) {
+            handleFloatToggle(context);
+            return;
+        }
+
         // 处理风扇控制按钮
         if (ACTION_OFF.equals(action) || ACTION_SILENT.equals(action)
                 || ACTION_FAST.equals(action) || ACTION_ON.equals(action)) {
@@ -134,6 +144,42 @@ public class FanWidget extends AppWidgetProvider {
                 }
             });
         }
+    }
+
+    // 通知栏悬浮窗按钮：切换开关并与个性化设置同步
+    private void handleFloatToggle(Context context) {
+        final PendingResult pendingResult = goAsync();
+        EXECUTOR.execute(() -> {
+            String msg = "";
+            try {
+                boolean nowEnabled = !FloatWindowService.isEnabled(context);
+                if (nowEnabled && !Settings.canDrawOverlays(context)) {
+                    Intent pi = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + context.getPackageName()));
+                    pi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(pi);
+                    msg = "请先授予悬浮窗权限";
+                } else {
+                    FloatWindowService.setEnabled(context, nowEnabled);
+                    if (nowEnabled) {
+                        context.startService(new Intent(context, FloatWindowService.class));
+                        msg = "信息悬浮窗已开启";
+                    } else {
+                        context.stopService(new Intent(context, FloatWindowService.class));
+                        msg = "信息悬浮窗已关闭";
+                    }
+                }
+            } catch (Exception e) {
+                msg = "操作失败，请检查权限";
+                LogRecorder.getInstance().error("FanWidget", "悬浮窗切换异常: " + e.getMessage());
+            } finally {
+                final String finalMsg = msg;
+                MAIN_HANDLER.post(() -> {
+                    Toast.makeText(context, finalMsg, Toast.LENGTH_SHORT).show();
+                    pendingResult.finish();
+                });
+            }
+        });
     }
 
     @Override

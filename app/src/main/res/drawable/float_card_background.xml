@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 信息悬浮窗背景：与主页面卡片同色（card_bg_blur 自适应深浅色），圆角按悬浮窗尺寸缩小 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 第一层：边缘高光 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#80FFFFFF"
+                android:endColor="#20FFFFFF"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- 第二层：柔光玻璃主体 -->
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="14dp" />
+            <solid android:color="@color/card_bg_blur" />
+        </shape>
+    </item>
+
+</layer-list>

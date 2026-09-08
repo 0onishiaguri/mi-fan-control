@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class FanUtil {
@@ -311,11 +312,23 @@ public class FanUtil {
     }
 
     // ========== 转速获取 ==========
+    // 哨兵值 2：二进制守护进程未正常更新转速节点（风扇关闭/节点异常/通信失败）
+    // 视为停转处理，避免把 "2" 当作真实转速污染主页/通知/悬浮窗显示与模式判断
+    private static long sLastRpmInvalidWarnTime = 0;
+    private static final long RPM_INVALID_WARN_INTERVAL_MS = 60 * 1000L;
+
     public static int getRealSpeed() {
         boolean isMax = isMaxModel();
         int rpm = FanSpeedSimulator.getInstance().getRealSpeed(isMax);
         if (rpm == 2) {
-            LogRecorder.getInstance().warn("FanSpeed", "检测到转速为2，请确保二进制守护进程正在运行");
+            // 无效哨兵值：按停转处理；日志 60 秒节流，避免每轮轮询刷屏
+            long now = System.currentTimeMillis();
+            if (now - sLastRpmInvalidWarnTime > RPM_INVALID_WARN_INTERVAL_MS) {
+                sLastRpmInvalidWarnTime = now;
+                LogRecorder.getInstance().warn("FanSpeed",
+                        "转速节点返回无效值(2)，已按停转处理，请确认二进制守护进程运行正常");
+            }
+            rpm = 0;
         }
         int oldRpm = cacheRpm;
         cacheRpm = rpm;
@@ -411,6 +424,120 @@ public class FanUtil {
 
     public static boolean isMaxModel() {
         return sIsMaxModel;
+    }
+
+    // ========== PWM读取 ==========
+    // PWM 采样：K90 Ultra / K90 Max 两条节点路径，1 秒节流（避免频繁 su 调用）
+    private static final long PWM_READ_CACHE_MS = 1000;
+    private static long sLastPwmReadTime = 0;
+    private static int sLastPwmValue = -1;
+
+    // 主线程安全：直接返回上次缓存值，不触发任何 IO / su 阻塞
+    public static int getCachedPwmDuty() {
+        return sLastPwmValue >= 0 ? sLastPwmValue : 0;
+    }
+
+    public static int readPwmDuty() {
+        long now = System.currentTimeMillis();
+        if (sLastPwmReadTime != 0 && now - sLastPwmReadTime < PWM_READ_CACHE_MS && sLastPwmValue >= 0) {
+            return sLastPwmValue;
+        }
+        sLastPwmReadTime = now;
+        String[] paths = {PWM_DUTY_PATH_ULTRA, PWM_DUTY_PATH_MAX};
+        for (String path : paths) {
+            String out = runSuCommand("cat " + path);
+            if (out == null) continue;
+            String trimmed = out.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("cat:")) continue;
+            try {
+                int v = Integer.parseInt(trimmed);
+                if (v > 100) {
+                    // 0-255 占空比原始值 → 百分比
+                    v = (int) Math.round(v * 100 / 255.0);
+                }
+                sLastPwmValue = v;
+                return v;
+            } catch (Exception ignored) {}
+        }
+        return sLastPwmValue >= 0 ? sLastPwmValue : 0;
+    }
+
+    // ========== 功耗读取（通知 / 悬浮窗共用） ==========
+    private static double sLastPowerW = -1;
+    private static boolean sChargingState = false;
+
+    // 返回当前功耗瓦数（充电正/放电负，已平滑），用于通知阈值化判断
+    public static float readPowerWatts(Context context) {
+        readPowerText(context);
+        return (float) sLastPowerW;
+    }
+
+    public static String readPowerText(Context context) {
+        // 优先 BatteryManager 瞬时电流（无 su 开销、实时准确）
+        try {
+            BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+            long cur = bm != null ? bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) : 0;
+            int vol = -1;
+            try {
+                Intent bi = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+                if (bi != null) {
+                    vol = bi.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
+                    int status = bi.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+                    sChargingState = status == BatteryManager.BATTERY_STATUS_CHARGING
+                            || status == BatteryManager.BATTERY_STATUS_FULL;
+                }
+            } catch (Exception ignored) {}
+            if (cur != 0 && cur != Integer.MIN_VALUE && vol > 0) {
+                return smoothPower(cur, vol);
+            }
+        } catch (Exception ignored) {}
+        // 降级：dumpsys battery（su）
+        try {
+            String out = runSuCommand("dumpsys battery");
+            if (out != null && !out.isEmpty()) {
+                long cur = parseLongAfter(out, "current now:");
+                // dumpsys battery 的 voltage 单位为 µV，需换算为 mV 再统一计算
+                long volMv = parseLongAfter(out, "voltage:") / 1000;
+                long status = parseLongAfter(out, "status:");
+                sChargingState = status == 2 || status == 5; // 2=charging 5=full
+                if (cur != 0 && volMv > 0) {
+                    return smoothPower(cur, volMv);
+                }
+            }
+        } catch (Exception ignored) {}
+        return "--";
+    }
+
+    private static String smoothPower(long curUa, long volMv) {
+        // 电流 µA × 电压 mV = 1e-9 W，保留正负号（放电负 / 充电正）
+        double w = ((double) curUa) * volMv / 1e9;
+        if (sChargingState) {
+            w = Math.abs(w);
+        } else {
+            w = -Math.abs(w);
+        }
+        // 仅在同方向时平滑，避免充放电切换瞬间正负抵消出错误的小值
+        if (sLastPowerW > 0 == w > 0) {
+            w = sLastPowerW * 0.5 + w * 0.5;
+        }
+        sLastPowerW = w;
+        return String.format(Locale.US, "%.1fW", w);
+    }
+
+    public static long parseLongAfter(String text, String key) {
+        if (text == null) return 0;
+        int idx = text.indexOf(key);
+        if (idx < 0) return 0;
+        int start = idx + key.length();
+        int end = start;
+        while (end < text.length() && (Character.isDigit(text.charAt(end)) || text.charAt(end) == '-')) {
+            end++;
+        }
+        try {
+            return Long.parseLong(text.substring(start, end).trim());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     // ========== PWM写入 ==========

@@ -1,9 +1,15 @@
 package com.fan.widget;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -81,13 +87,7 @@ public class LogRecorder {
 
     public synchronized File exportToFile(Context context) {
         try {
-            File dir = new File(context.getExternalFilesDir(null), "logs");
-            if (!dir.exists() && !dir.mkdirs()) {
-                return null;
-            }
-
             String fileName = "fan_log_" + DATE_FORMAT_FILE.format(new Date()) + ".txt";
-            File file = new File(dir, fileName);
 
             StringBuilder sb = new StringBuilder();
             sb.append("=== Mi Fan Control 运行日志 ===\n");
@@ -103,12 +103,36 @@ public class LogRecorder {
                         .append('\n');
             }
 
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Android 10+（本项目 minSdk 35）：通过 MediaStore 写入公共 下载/MiFanControl 目录，无需存储权限
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+                values.put(MediaStore.Downloads.RELATIVE_PATH,
+                        Environment.DIRECTORY_DOWNLOADS + "/MiFanControl");
+                Uri uri = context.getContentResolver()
+                        .insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) return null;
+                try (OutputStream os = context.getContentResolver().openOutputStream(uri)) {
+                    if (os == null) return null;
+                    os.write(sb.toString().getBytes("UTF-8"));
+                }
+                return new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS), "MiFanControl/" + fileName);
+            }
+
+            // 极低版本兜底（minSdk 35 下不可达）
+            File dir = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS), "MiFanControl");
+            if (!dir.exists() && !dir.mkdirs()) {
+                return null;
+            }
+            File file = new File(dir, fileName);
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(sb.toString());
             }
             return file;
         } catch (Exception e) {
-            // 可添加日志记录异常
             return null;
         }
     }

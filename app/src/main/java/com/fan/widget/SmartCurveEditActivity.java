@@ -1,6 +1,12 @@
 package com.fan.widget;
 
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.text.Editable;
@@ -15,9 +21,12 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -258,12 +267,25 @@ public class SmartCurveEditActivity extends BaseActivity {
             }
             root.put("intervals", intervalArray);
 
-            File file = new File(getFilesDir(), CONFIG_FILE_NAME);
-            try (FileOutputStream fos = new FileOutputStream(file)) {
-                fos.write(root.toString().getBytes(StandardCharsets.UTF_8));
+            // 导出到公共 下载/MiFanControl 目录（与日志保存路径一致，无需存储权限）
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, CONFIG_FILE_NAME);
+            values.put(MediaStore.Downloads.MIME_TYPE, "application/json");
+            values.put(MediaStore.Downloads.RELATIVE_PATH,
+                    Environment.DIRECTORY_DOWNLOADS + "/MiFanControl");
+            Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) {
+                Toast.makeText(this, "导出失败：无法创建文件", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try (OutputStream os = getContentResolver().openOutputStream(uri)) {
+                if (os != null) {
+                    os.write(root.toString().getBytes(StandardCharsets.UTF_8));
+                }
             }
 
-            Toast.makeText(this, "配置已成功导出", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "配置已导出到 下载/MiFanControl/" + CONFIG_FILE_NAME,
+                    Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "导出失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -272,15 +294,27 @@ public class SmartCurveEditActivity extends BaseActivity {
 
     private void importConfig() {
         try {
-            File file = new File(getFilesDir(), CONFIG_FILE_NAME);
-            if (!file.exists()) {
-                Toast.makeText(this, "未找到导出的配置文件", Toast.LENGTH_SHORT).show();
+            // 从公共 下载/MiFanControl 目录读取（与日志保存路径一致）
+            Uri configUri = queryConfigUri();
+            if (configUri == null) {
+                Toast.makeText(this, "未找到配置文件（下载/MiFanControl/" + CONFIG_FILE_NAME + "）",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            byte[] bytes = new byte[(int) file.length()];
-            try (FileInputStream fis = new FileInputStream(file)) {
-                fis.read(bytes);
+            byte[] bytes;
+            try (InputStream is = getContentResolver().openInputStream(configUri)) {
+                if (is == null) {
+                    Toast.makeText(this, "读取配置文件失败", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int n;
+                while ((n = is.read(buf)) != -1) {
+                    bos.write(buf, 0, n);
+                }
+                bytes = bos.toByteArray();
             }
 
             JSONObject root = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
@@ -331,6 +365,23 @@ public class SmartCurveEditActivity extends BaseActivity {
             e.printStackTrace();
             Toast.makeText(this, "导入失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    // 查询 下载/MiFanControl 下的配置文件（按文件名+相对路径精确匹配）
+    private Uri queryConfigUri() {
+        String selection = MediaStore.Downloads.DISPLAY_NAME + "=? AND "
+                + MediaStore.Downloads.RELATIVE_PATH + "=?";
+        String[] args = {CONFIG_FILE_NAME, Environment.DIRECTORY_DOWNLOADS + "/MiFanControl/"};
+        try (Cursor cursor = getContentResolver().query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Downloads._ID}, selection, args, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                long id = cursor.getLong(0);
+                return ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     // ========== 恢复默认（含步进配置） ==========

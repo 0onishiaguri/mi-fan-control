@@ -77,7 +77,7 @@ public class HomeFragment extends Fragment {
     private TextView tvPwmValue, tvEditCurve, tvAddAppConfig;
     private LinearLayout mCardTempNode;
     private TextView tvTempNodeName, tvTempNodeHint;
-    private Button btnStop, btnSilent, btnFast, btnMax;
+    private QuickLevelPicker mQuickPicker;
     private TextView tvServiceStatus, tvRunTime;
     private LinearLayout itemServiceStatus;
     private ImageView ivModeHelp;
@@ -140,10 +140,7 @@ public class HomeFragment extends Fragment {
         mCardTempNode = view.findViewById(R.id.card_temp_node);
         tvTempNodeName = view.findViewById(R.id.tv_temp_node_name);
         tvTempNodeHint = view.findViewById(R.id.tv_temp_node_hint);
-        btnStop = view.findViewById(R.id.btn_stop);
-        btnSilent = view.findViewById(R.id.btn_silent);
-        btnFast = view.findViewById(R.id.btn_fast);
-        btnMax = view.findViewById(R.id.btn_max);
+        mQuickPicker = view.findViewById(R.id.quick_level_picker);
         tvServiceStatus = view.findViewById(R.id.tv_service_status);
         tvRunTime = view.findViewById(R.id.tv_run_time);
         itemServiceStatus = view.findViewById(R.id.item_service_status);
@@ -193,21 +190,15 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        btnStop.setOnClickListener(v -> {
-            LogRecorder.getInstance().info("UserAction", "点击【关闭】");
-            mExecutor.execute(FanUtil::fanStop);
-        });
-        btnSilent.setOnClickListener(v -> {
-            LogRecorder.getInstance().info("UserAction", "点击【静谧】");
-            mExecutor.execute(FanUtil::fanSilent);
-        });
-        btnFast.setOnClickListener(v -> {
-            LogRecorder.getInstance().info("UserAction", "点击【高速】");
-            mExecutor.execute(FanUtil::fanFast);
-        });
-        btnMax.setOnClickListener(v -> {
-            LogRecorder.getInstance().info("UserAction", "点击【狂暴】");
-            mExecutor.execute(FanUtil::fanMax);
+        mQuickPicker.setOnLevelSelectedListener(level -> {
+            String name = level == 0 ? "关闭" : level == 1 ? "静谧" : level == 2 ? "高速" : "狂暴";
+            LogRecorder.getInstance().info("UserAction", "快捷档位选择 → " + name);
+            mExecutor.execute(() -> {
+                if (level == 0) FanUtil.fanStop();
+                else if (level == 1) FanUtil.fanSilent();
+                else if (level == 2) FanUtil.fanFast();
+                else FanUtil.fanMax();
+            });
         });
 
         itemServiceStatus.setOnClickListener(v -> restartService());
@@ -243,7 +234,8 @@ public class HomeFragment extends Fragment {
         }
 
         int stableRpm = applyHysteresis(rawRpm);
-        int zone = getZone(stableRpm);
+        // 旋转速度按 PWM 占空比判定（0-40 → 30%，41-70 → 60%，71-100 → 100%），读缓存不阻塞主线程
+        int zone = getZone(stableRpm, FanUtil.getCachedPwmDuty());
 
         if (zone != lastRpmZone) {
             lastRpmZone = zone;
@@ -274,10 +266,10 @@ public class HomeFragment extends Fragment {
         return rawRpm;
     }
 
-    private int getZone(int rpm) {
+    private int getZone(int rpm, int pwm) {
         if (rpm <= 0) return ZONE_STOP;
-        if (rpm < 13000) return ZONE_LOW;
-        if (rpm < 18000) return ZONE_MID;
+        if (pwm <= 40) return ZONE_LOW;
+        if (pwm <= 70) return ZONE_MID;
         return ZONE_HIGH;
     }
 
@@ -432,8 +424,8 @@ public class HomeFragment extends Fragment {
         tvMainTemp.setText(temp + "°");
         tvMainRpm.setTextColor(FanUtil.getRpmColor(rpm));
 
-        int speedRatio = Math.min(100, (int) ((rpm * 100f) / MAX_RPM_BASE));
-        tvSpeedRatio.setText(speedRatio + "%");
+        // 左下：实时 PWM 占空比（%）（读缓存，主线程不执行 su）
+        tvSpeedRatio.setText(FanUtil.getCachedPwmDuty() + "%");
         tvSpeedRatio.setTextColor(FanUtil.getRpmColor(rpm));
 
         tvMainTemp.setTextColor(FanUtil.getTempColor(temp));
@@ -445,6 +437,30 @@ public class HomeFragment extends Fragment {
         tvBatteryTemp.setText(getBatteryTemperature() + "°");
 
         tvRunTime.setText(formatRunTime(FanUtil.totalRunTimeMs));
+
+        // 快捷档位选择器状态同步（用户拖动中不干扰；系统模式读缓存避免主线程 su）
+        if (mQuickPicker != null && !mQuickPicker.isTracking()) {
+            mQuickPicker.setCurrentLevel(getQuickLevelFromState(rpm), false);
+        }
+    }
+
+    // 当前状态 → 快捷档位 index（关闭/静谧/高速/狂暴 = 0/1/2/4）
+    private int getQuickLevelFromState(int rpm) {
+        if (rpm == 0) return 0;
+        switch (FanUtil.currentControlMode) {
+            case FanUtil.MODE_LOW_LEVEL:
+            case FanUtil.MODE_APP_CUSTOM:
+                return FanUtil.currentTargetLevel;
+            case FanUtil.MODE_SMART: {
+                int pwm = FanUtil.targetPwmDuty;
+                if (pwm <= 0) return 0;
+                if (pwm <= 40) return 1;
+                if (pwm <= 70) return 2;
+                return 4;
+            }
+            default: // MODE_SYSTEM：不做 su 读取，映射为高速档
+                return 2;
+        }
     }
 
     private int getBatteryTemperature() {

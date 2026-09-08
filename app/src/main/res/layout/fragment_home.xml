@@ -167,7 +167,7 @@
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
-                <!-- 左下：转速比值 -->
+                <!-- 左下：实时PWM值 -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -184,7 +184,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="转速比值"
+                        android:text="PWM值"
                         android:textColor="@color/text_secondary"
                         android:textSize="14sp"
                         android:layout_marginTop="2dp" />
@@ -234,52 +234,10 @@
                     android:textSize="15sp"
                     android:layout_marginBottom="12dp" />
 
-                <LinearLayout
+                <com.fan.widget.QuickLevelPicker
+                    android:id="@+id/quick_level_picker"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center">
-                    <Button
-                        android:id="@+id/btn_stop"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_weight="1"
-                        android:text="关闭"
-                        android:textSize="14sp"
-                        android:backgroundTint="@color/btn_close"
-                        android:textColor="@android:color/white"
-                        android:layout_marginEnd="6dp" />
-                    <Button
-                        android:id="@+id/btn_silent"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_weight="1"
-                        android:text="静谧"
-                        android:textSize="14sp"
-                        android:backgroundTint="@color/btn_silent"
-                        android:textColor="@android:color/white"
-                        android:layout_marginHorizontal="6dp" />
-                    <Button
-                        android:id="@+id/btn_fast"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_weight="1"
-                        android:text="高速"
-                        android:textSize="14sp"
-                        android:backgroundTint="@color/btn_fast"
-                        android:textColor="@android:color/white"
-                        android:layout_marginHorizontal="6dp" />
-                    <Button
-                        android:id="@+id/btn_max"
-                        android:layout_width="0dp"
-                        android:layout_height="42dp"
-                        android:layout_weight="1"
-                        android:text="狂暴"
-                        android:textSize="14sp"
-                        android:backgroundTint="@color/btn_rage"
-                        android:textColor="@android:color/white"
-                        android:layout_marginStart="6dp" />
-                </LinearLayout>
+                    android:layout_height="52dp" />
             </LinearLayout>
 
             <!-- ========== 温度节点切换卡片 ========== -->
@@ -557,7 +515,12 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:max="99"
-                        android:progress="0" />
+                        android:progress="0"
+                        android:progressDrawable="@drawable/seek_track"
+                        android:thumb="@drawable/seek_thumb"
+                        android:splitTrack="false"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp" />
                     <TextView
                         android:id="@+id/tv_pwm_value"
                         android:layout_width="wrap_content"

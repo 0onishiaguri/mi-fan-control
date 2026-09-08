@@ -14,6 +14,12 @@ public class AboutActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
 
+        // 【新增】检查软件更新点击事件
+        LinearLayout itemCheckUpdate = findViewById(R.id.item_check_update);
+        itemCheckUpdate.setOnClickListener(v -> {
+            startActivity(new Intent(this, CheckUpdateActivity.class));
+        });
+
         // 原有：感谢名单点击事件
         LinearLayout itemThanks = findViewById(R.id.item_thanks);
         itemThanks.setOnClickListener(v -> {

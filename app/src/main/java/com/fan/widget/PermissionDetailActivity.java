@@ -34,7 +34,8 @@ public class PermissionDetailActivity extends BaseActivity {
     private static final String TAG = "PermissionDetail";
 
     private TextView tvRootStatus, tvAutostartStatus, tvBatteryStatus,
-            tvNotificationStatus, tvAccessibilityStatus, tvUsageStatsStatus;
+            tvNotificationStatus, tvAccessibilityStatus, tvUsageStatsStatus,
+            tvOverlayStatus;
 
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
     private Future<?> mCheckTask;
@@ -68,6 +69,7 @@ public class PermissionDetailActivity extends BaseActivity {
         tvNotificationStatus = findViewById(R.id.tv_notification_status);
         tvAccessibilityStatus = findViewById(R.id.tv_accessibility_status);
         tvUsageStatsStatus = findViewById(R.id.tv_usage_stats_status);
+        tvOverlayStatus = findViewById(R.id.tv_overlay_status);
 
         findViewById(R.id.item_root).setOnClickListener(v -> openRootSettings());
         findViewById(R.id.item_autostart).setOnClickListener(v -> openAutostartSettings());
@@ -75,6 +77,7 @@ public class PermissionDetailActivity extends BaseActivity {
         findViewById(R.id.item_notification).setOnClickListener(v -> openNotificationSettings());
         findViewById(R.id.item_accessibility).setOnClickListener(v -> openAccessibilitySettings());
         findViewById(R.id.item_usage_stats).setOnClickListener(v -> openUsageStatsSettings());
+        findViewById(R.id.item_overlay).setOnClickListener(v -> openOverlaySettings());
 
         // 独立页面，不需要隐藏底部导航（MainActivity 的导航与本 Activity 无关）
 
@@ -103,6 +106,7 @@ public class PermissionDetailActivity extends BaseActivity {
             final boolean notification = checkNotificationPermission();
             final boolean accessibility = checkAccessibilityPermission();
             final boolean usageStats = checkUsageStatsPermission();
+            final boolean overlay = checkOverlayPermission();
 
             mMainHandler.post(() -> {
                 updateStatusText(tvRootStatus, root);
@@ -111,6 +115,7 @@ public class PermissionDetailActivity extends BaseActivity {
                 updateStatusText(tvNotificationStatus, notification);
                 updateStatusText(tvAccessibilityStatus, accessibility);
                 updateStatusText(tvUsageStatsStatus, usageStats);
+                updateStatusText(tvOverlayStatus, overlay);
             });
         });
     }
@@ -234,6 +239,21 @@ public class PermissionDetailActivity extends BaseActivity {
     private void openUsageStatsSettings() {
         try { startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)); }
         catch (Exception e) { openAppDetailsSettings(); }
+    }
+
+    // ========== 悬浮窗权限 ==========
+    private boolean checkOverlayPermission() {
+        return Settings.canDrawOverlays(this);
+    }
+
+    private void openOverlaySettings() {
+        try {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        } catch (Exception e) {
+            openAppDetailsSettings();
+        }
     }
 
     private void openAppDetailsSettings() {

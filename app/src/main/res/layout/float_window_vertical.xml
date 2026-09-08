@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  竖版信息悬浮窗：5 组数据（档位/温度/转速/功耗/PWM）。
+  数据名称与数值统一 14sp 加粗同色，名称与数值之间保持 8dp 间隔。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="120dp"
+    android:layout_height="200dp"
+    android:orientation="vertical"
+    android:background="@drawable/float_card_background"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp"
+    android:paddingVertical="1dp">
+
+    <!-- 档位 -->
+    <LinearLayout
+        android:id="@+id/row_mode"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/float_lb_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="档位:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"/>
+        <TextView
+            android:id="@+id/float_mode"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="--"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"
+            android:layout_marginStart="20dp"/>
+    </LinearLayout>
+
+    <!-- 温度 -->
+    <LinearLayout
+        android:id="@+id/row_temp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/float_lb_temp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="温度:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"/>
+        <TextView
+            android:id="@+id/float_temp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="--"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"
+            android:layout_marginStart="20dp"/>
+    </LinearLayout>
+
+    <!-- 转速 -->
+    <LinearLayout
+        android:id="@+id/row_rpm"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/float_lb_rpm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="转速:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"/>
+        <TextView
+            android:id="@+id/float_rpm"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="--"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"
+            android:layout_marginStart="20dp"/>
+    </LinearLayout>
+
+    <!-- 功耗 -->
+    <LinearLayout
+        android:id="@+id/row_power"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/float_lb_power"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="功耗:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"/>
+        <TextView
+            android:id="@+id/float_power"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="--"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"
+            android:layout_marginStart="20dp"/>
+    </LinearLayout>
+
+    <!-- PWM -->
+    <LinearLayout
+        android:id="@+id/row_pwm"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/float_lb_pwm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PWM:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"/>
+        <TextView
+            android:id="@+id/float_pwm"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="--"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"
+            android:layout_marginStart="16dp"/>
+    </LinearLayout>
+
+</LinearLayout>

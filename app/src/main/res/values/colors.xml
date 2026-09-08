@@ -8,6 +8,9 @@
     <color name="btn_rage">#E6212A</color>
     <color name="btn_silent">#2288FF</color>
     <color name="btn_close">#B0B4BA</color>
+    <color name="picker_track">#F0F1F3</color>
+    <color name="update_ok">#34A853</color>
+    <color name="update_fail">#E6212A</color>
     <color name="btn_text_white">#FFFFFF</color>
     <color name="bg_primary">#F5F7FA</color>
     <color name="card_bg_blur">#99FFFFFF</color>

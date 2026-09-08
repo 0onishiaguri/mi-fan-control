@@ -26,6 +26,13 @@
             android:text="拖动节点或输入数值调整，支持导出/导入全局配置\n(本页面功能现为实验性功能，请谨慎调整数据和使用)"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="配置保存路径:/storage/emulated/0/Download/MiFanControl/smart_curve_export.json"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <!-- 模式切换（分段式控件） -->

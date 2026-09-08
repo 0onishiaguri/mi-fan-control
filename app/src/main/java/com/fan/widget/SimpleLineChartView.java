@@ -48,9 +48,9 @@ public class SimpleLineChartView extends View {
         mTempPaint.setAntiAlias(true);
 
         mGridPaint = new Paint();
-        mGridPaint.setColor(Color.parseColor("#E0E0E0"));
+        mGridPaint.setColor(Color.parseColor("#4D4D4D"));
         mGridPaint.setStyle(Paint.Style.STROKE);
-        mGridPaint.setStrokeWidth(0.8f);
+        mGridPaint.setStrokeWidth(1f);
         mGridPaint.setAntiAlias(true);
 
         mAxisTextPaint = new Paint();

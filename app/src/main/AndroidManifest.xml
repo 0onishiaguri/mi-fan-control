@@ -24,6 +24,15 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- 悬浮窗（信息悬浮窗必须） -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- 网络（在线检查更新） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 安装更新包（允许未知来源） -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- ========== 查询范围限制（替代 QUERY_ALL_PACKAGES） ========== -->
     <queries>
         <intent>
@@ -67,6 +76,10 @@
 
         <activity
             android:name=".AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".CheckUpdateActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
@@ -120,6 +133,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- 更新包安装 FileProvider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.fan.widget.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- 后台刷新服务 -->
         <service
             android:name=".FanRefreshService"
@@ -130,6 +154,11 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Fan hardware temperature and speed monitoring" />
         </service>
+
+        <!-- 信息悬浮窗服务 -->
+        <service
+            android:name=".FloatWindowService"
+            android:exported="false" />
 
         <!-- 无障碍保活服务 -->
         <service

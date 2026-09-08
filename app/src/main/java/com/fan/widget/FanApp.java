@@ -1,6 +1,8 @@
 package com.fan.widget;
 
 import android.app.Application;
+import android.content.Intent;
+import android.provider.Settings;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,6 +41,19 @@ public class FanApp extends Application {
             } catch (Exception e) {
                 globalDeviceModel = "读取失败";
                 LogRecorder.getInstance().error("AppLifecycle", "读取设备型号异常:" + e.getMessage());
+            }
+        }).start();
+
+        // 恢复悬浮窗（开机/冷启后若开关已开且权限已授）
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                if (FloatWindowService.isEnabled(getApplicationContext())
+                        && Settings.canDrawOverlays(getApplicationContext())) {
+                    startService(new Intent(getApplicationContext(), FloatWindowService.class));
+                }
+            } catch (Exception e) {
+                LogRecorder.getInstance().error("AppLifecycle", "恢复悬浮窗异常: " + e.getMessage());
             }
         }).start();
     }

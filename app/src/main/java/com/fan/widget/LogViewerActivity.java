@@ -137,7 +137,7 @@ public class LogViewerActivity extends BaseActivity {
     private void doExportLog() {
         File logFile = LogRecorder.getInstance().exportToFile(this);
         if (logFile != null) {
-            Toast.makeText(this, "日志已导出，请前往内部存储目录查看", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "日志已导出至 下载/MiFanControl 目录", Toast.LENGTH_LONG).show();
         } else {
             Toast.makeText(this, "导出失败，请稍后重试", Toast.LENGTH_SHORT).show();
         }

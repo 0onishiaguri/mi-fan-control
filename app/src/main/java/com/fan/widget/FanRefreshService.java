@@ -21,6 +21,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
@@ -28,13 +29,32 @@ import androidx.core.app.NotificationCompat;
 import java.util.List;
 
 public class FanRefreshService extends Service {
-    private static final String CHANNEL_ID = "fan_widget_service";
+    // 通知优先级三渠道（低/默认/高），切换渠道 id 即切换重要性，互不影响
+    private static final String CHANNEL_ID_LOW = "fan_widget_low";
+    private static final String CHANNEL_ID_DEFAULT = "fan_widget_default";
+    private static final String CHANNEL_ID_HIGH = "fan_widget_high";
+    public static final String ACTION_REFRESH_NOW = "com.fan.widget.ACTION_REFRESH_NOW";
+    private static final String KEY_NOTIFY_PRIORITY = "notify_priority"; // 0低 1默认 2高
+    private static final String KEY_NOTIFY_CUSTOM = "notify_custom_data"; // 通知栏数据自定义开关
+    // 通知排序时间戳策略：服务启动时锁定一次，之后每 2 小时刷新一次。
+    // 效果：通知刷新时 when 不变 → 排序位置不随刷新跳动（不与其他常驻通知抢位）；
+    // 且 when 始终是近期时间 → 不会被系统当作"旧通知"收纳隐藏（固定 2023 年时间戳会触发收纳导致通知消失）。
+    private static final long NOTIFY_WHEN_REFRESH_MS = 2 * 3600 * 1000L;
+    private long mNotifyWhen = 0L;
+    private long mNotifyWhenLockedAt = 0L;
+    private static final String KEY_NOTIFY_POS_LEFT = "notify_pos_left";
+    private static final String KEY_NOTIFY_POS_MID = "notify_pos_mid";
+    private static final String KEY_NOTIFY_POS_RIGHT = "notify_pos_right";
+    // 通知重建阈值（B 方案：数据变化达到阈值才重建，降低刷新频率减少与常驻通知抢位）
+    private static final int NOTIFY_RPM_THRESHOLD = 200;
+    private static final int NOTIFY_TEMP_THRESHOLD = 1;
+    private static final int NOTIFY_PWM_THRESHOLD = 5;
+    private static final float NOTIFY_POWER_THRESHOLD = 0.5f;
     private static final int NOTIFY_ID = 999;
     private static final String WAKE_LOCK_TAG = "FanWidget:RefreshWakeLock";
     private static final long SCREEN_OFF_INTERVAL = 3000; // 息屏后3秒刷新
     private static final String SP_CONFIG = "fan_widget_config";
     private static final String KEY_RUN_TIME = "fan_total_run_time";
-    private static final String KEY_NOTIFICATION_TITLE = "notification_title";
     private static final String KEY_SCREEN_OFF_STOP = "screen_off_stop_fan";
     private static final int WATCHDOG_ALARM_REQUEST = 1001;
     private static final long WATCHDOG_INTERVAL_MS = 15 * 60 * 1000L; // 15分钟
@@ -54,8 +74,6 @@ public class FanRefreshService extends Service {
     private volatile boolean mWasStoppedByScreenOff = false;
 
     private BroadcastReceiver mScreenReceiver;
-    private int zeroSpeedCount = 0;
-    private static final int STABLE_ZERO_THRESHOLD = 2; // 连续2次零速才视为关闭
 
     // 应用自定义模式
     private String mLastForegroundPkg = "";
@@ -67,7 +85,7 @@ public class FanRefreshService extends Service {
     private int mZeroRpmWatchCount = 0;
 
     // 缓存PendingIntent
-    private PendingIntent mPiOff, mPiFast, mPiMax, mPiContent;
+    private PendingIntent mPiOff, mPiFast, mPiMax, mPiFloat, mPiContent;
 
     // 前台应用查询节流
     private int mAppCheckCounter = 0;
@@ -95,7 +113,14 @@ public class FanRefreshService extends Service {
         acquireWakeLock();
         createNotifyChannel();
         initPendingIntents(); // 缓存PendingIntent
-        startForeground(NOTIFY_ID, buildNotification("初始化", 0, 0, "散热风扇正在运行"));
+        // 锁定排序时间戳初始值（近期时间）
+        getNotifyWhen();
+        // 防御：通知构建异常不能导致前台服务崩溃（否则风扇控制也会一起停）
+        try {
+            startForeground(NOTIFY_ID, buildNotification("初始化", 0, 0, "--", 0));
+        } catch (Exception e) {
+            LogRecorder.getInstance().error("ServiceEvent", "初始化通知失败:" + e.getMessage());
+        }
 
         registerScreenReceiver();
         lastLoopTime = System.currentTimeMillis();
@@ -117,6 +142,8 @@ public class FanRefreshService extends Service {
         mPiFast = PendingIntent.getBroadcast(this, 1002, fastIntent, flags);
         Intent maxIntent = new Intent(this, FanWidget.class).setAction(FanWidget.ACTION_ON);
         mPiMax = PendingIntent.getBroadcast(this, 1003, maxIntent, flags);
+        Intent floatIntent = new Intent(this, FanWidget.class).setAction(FanWidget.ACTION_FLOAT_TOGGLE);
+        mPiFloat = PendingIntent.getBroadcast(this, 1004, floatIntent, flags);
         Intent openAppIntent = new Intent(this, MainActivity.class);
         mPiContent = PendingIntent.getActivity(this, 0, openAppIntent, flags);
     }
@@ -196,8 +223,20 @@ public class FanRefreshService extends Service {
     }
 
     private void scheduleNextRefresh() {
-        long interval = mIsScreenOn ? RefreshPrefs.getWidgetInterval(this) : SCREEN_OFF_INTERVAL;
+        long interval = mIsScreenOn ? getCollectInterval() : SCREEN_OFF_INTERVAL;
         mBackgroundHandler.postDelayed(mRefreshTask, interval);
+    }
+
+    // 采集循环频率 = 通知/小组件/悬浮窗自定义频率中的最小值，保证任意 UI 都能拿到新鲜数据；
+    // 各 UI 自身按各自频率独立刷新，互不影响。
+    private long getCollectInterval() {
+        long widget = RefreshPrefs.getWidgetInterval(this);
+        long notify = RefreshPrefs.getNotifyInterval(this);
+        long interval = Math.min(widget, notify);
+        if (FloatWindowService.isEnabled(this)) {
+            interval = Math.min(interval, FloatWindowService.getInterval(this));
+        }
+        return Math.max(interval, 500L); // 下限 0.5s，避免 su 频率过高
     }
 
     private void performRefresh() {
@@ -243,6 +282,9 @@ public class FanRefreshService extends Service {
 
         // 通知与小组件更新
         updateNotificationsAndWidgets(rpm, temp, currentMode, now);
+
+        // 后台线程预热 PWM 缓存（1 秒节流），供主线程/悬浮窗无阻塞读取
+        FanUtil.readPwmDuty();
     }
 
     private void handleControlModes(int temp) {
@@ -303,40 +345,45 @@ public class FanRefreshService extends Service {
         } catch (Exception ignored) {}
     }
 
-    // 通知强制刷新下限：内容无变化时最长 60 秒才重建一次，避免高频重建通知
-    private static final long NOTIFY_FORCE_REFRESH_MS = 60 * 1000L;
+    // 通知强制刷新下限：内容无变化时最长 120 秒才重建一次，避免高频重建通知
+    private static final long NOTIFY_FORCE_REFRESH_MS = 120 * 1000L;
     private int mLastNotifyRpm = -1;
     private int mLastNotifyTemp = -1;
     private String mLastNotifyMode = "";
+    private int mLastNotifyPwm = -1;
+    private float mLastNotifyPower = Float.NaN;
+
+    private long lastWidgetUpdateTime = 0;
 
     private void updateNotificationsAndWidgets(int rpm, int temp, String currentMode, long now) {
-        // 判断是否真正运行（考虑阈值防止抖动）
-        boolean currentRunning;
-        if (rpm > 0) {
-            zeroSpeedCount = 0;
-            currentRunning = true;
-        } else {
-            zeroSpeedCount++;
-            currentRunning = zeroSpeedCount >= STABLE_ZERO_THRESHOLD;
+        // 小组件：按自定义刷新频率独立节流，与通知/悬浮窗互不影响
+        long widgetInterval = RefreshPrefs.getWidgetInterval(this);
+        if (now - lastWidgetUpdateTime >= widgetInterval) {
+            lastWidgetUpdateTime = now;
+            refreshAllWidget(rpm, temp);
         }
 
-        String customNotifyTitle = mSharedPrefs.getString(KEY_NOTIFICATION_TITLE, "散热风扇正在运行");
-        String notifyTitle = currentRunning ? customNotifyTitle : "散热风扇已关闭";
-
-        // 更新小组件
-        refreshAllWidget(rpm, temp);
-
-        // 更新通知：内容变化时按用户间隔刷新；内容不变时最长 60 秒刷新一次
-        boolean contentChanged = rpm != mLastNotifyRpm || temp != mLastNotifyTemp || !currentMode.equals(mLastNotifyMode);
+        // 通知：按自定义刷新频率独立节流；内容达到阈值变化（模式变/转速±200/温度±1/PWM±5/功耗±0.5W）才重建，
+        // 无变化时最长 120 秒兜底刷新一次，显著减少重建次数，避免与常驻通知抢位置
+        String powerText = FanUtil.readPowerText(this);
+        int pwm = FanUtil.getCachedPwmDuty();
+        float powerW = FanUtil.readPowerWatts(this);
+        boolean contentChanged = !currentMode.equals(mLastNotifyMode)
+                || Math.abs(rpm - mLastNotifyRpm) >= NOTIFY_RPM_THRESHOLD
+                || Math.abs(temp - mLastNotifyTemp) >= NOTIFY_TEMP_THRESHOLD
+                || Math.abs(pwm - mLastNotifyPwm) >= NOTIFY_PWM_THRESHOLD
+                || Math.abs(powerW - mLastNotifyPower) >= NOTIFY_POWER_THRESHOLD;
         mLastNotifyRpm = rpm;
         mLastNotifyTemp = temp;
         mLastNotifyMode = currentMode;
+        mLastNotifyPwm = pwm;
+        mLastNotifyPower = powerW;
 
         long notifyInterval = RefreshPrefs.getNotifyInterval(this);
         if (now - lastNotifyUpdateTime >= notifyInterval
                 && (contentChanged || now - lastNotifyUpdateTime >= NOTIFY_FORCE_REFRESH_MS)) {
             lastNotifyUpdateTime = now;
-            Notification notify = buildNotification(currentMode, rpm, temp, notifyTitle);
+            Notification notify = buildNotification(currentMode, rpm, temp, powerText, pwm);
             startForeground(NOTIFY_ID, notify);
         }
     }
@@ -451,33 +498,126 @@ public class FanRefreshService extends Service {
     // ===== 通知栏 =====
     private void createNotifyChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "风扇监控后台服务",
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            channel.setShowBadge(false);
             NotificationManager nm = getSystemService(NotificationManager.class);
-            if (nm != null) {
-                nm.createNotificationChannel(channel);
+            if (nm == null) return;
+            NotificationChannel low = new NotificationChannel(
+                    CHANNEL_ID_LOW, "风扇监控（低优先级）", NotificationManager.IMPORTANCE_LOW);
+            low.setShowBadge(false);
+            nm.createNotificationChannel(low);
+            NotificationChannel def = new NotificationChannel(
+                    CHANNEL_ID_DEFAULT, "风扇监控（默认）", NotificationManager.IMPORTANCE_DEFAULT);
+            def.setShowBadge(false);
+            nm.createNotificationChannel(def);
+            NotificationChannel high = new NotificationChannel(
+                    CHANNEL_ID_HIGH, "风扇监控（高优先级）", NotificationManager.IMPORTANCE_HIGH);
+            high.setShowBadge(false);
+            nm.createNotificationChannel(high);
+        }
+    }
+
+    private String getNotifyChannelId() {
+        int p = mSharedPrefs.getInt(KEY_NOTIFY_PRIORITY, 1);
+        return p <= 0 ? CHANNEL_ID_LOW : (p >= 2 ? CHANNEL_ID_HIGH : CHANNEL_ID_DEFAULT);
+    }
+
+    // 通知栏左/中/右三位置的数据槽位 id（折叠/展开布局共用同一套 id）
+    private static final int[][] NOTIFY_SLOT_LABELS = {
+            {R.id.lt_lb_mode, R.id.lt_lb_speed, R.id.lt_lb_temp, R.id.lt_lb_power, R.id.lt_lb_pwm},
+            {R.id.mt_lb_mode, R.id.mt_lb_speed, R.id.mt_lb_temp, R.id.mt_lb_power, R.id.mt_lb_pwm},
+            {R.id.rt_lb_mode, R.id.rt_lb_speed, R.id.rt_lb_temp, R.id.rt_lb_power, R.id.rt_lb_pwm},
+    };
+    private static final int[][] NOTIFY_SLOT_VALUES = {
+            {R.id.lt_v_mode, R.id.lt_v_speed, R.id.lt_v_temp, R.id.lt_v_power, R.id.lt_v_pwm},
+            {R.id.mt_v_mode, R.id.mt_v_speed, R.id.mt_v_temp, R.id.mt_v_power, R.id.mt_v_pwm},
+            {R.id.rt_v_mode, R.id.rt_v_speed, R.id.rt_v_temp, R.id.rt_v_power, R.id.rt_v_pwm},
+    };
+
+    // 数据池顺序：0档位 1转速 2温度 3功耗 4PWM
+    private void fillNotifySlots(RemoteViews views, String[] values, int[] selection) {
+        for (int slot = 0; slot < 3; slot++) {
+            int sel = selection[slot];
+            for (int i = 0; i < 5; i++) {
+                boolean show = (i == sel);
+                views.setViewVisibility(NOTIFY_SLOT_LABELS[slot][i], show ? View.VISIBLE : View.GONE);
+                views.setViewVisibility(NOTIFY_SLOT_VALUES[slot][i], show ? View.VISIBLE : View.GONE);
+                if (show) {
+                    views.setTextViewText(NOTIFY_SLOT_VALUES[slot][i], values[i]);
+                }
             }
         }
     }
 
-    private Notification buildNotification(String mode, int rpm, int temp, String title) {
-        String contentText = "模式：" + mode + " | 转速：" + rpm + " | 设备温度：" + temp + "°";
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
+    private Notification buildNotification(String mode, int rpm, int temp, String powerText, int pwm) {
+        // 数据池：0档位 1转速 2温度 3功耗 4PWM
+        String[] values = {
+                mode,
+                String.valueOf(rpm),
+                temp + "°",
+                powerText,
+                pwm + "%"
+        };
+        boolean customData = mSharedPrefs.getBoolean(KEY_NOTIFY_CUSTOM, false);
+        // 默认档位+转速+温度；开启自定义后才读取用户配置
+        int left = customData ? clampPos(mSharedPrefs.getInt(KEY_NOTIFY_POS_LEFT, 0)) : 0;
+        int mid = customData ? clampPos(mSharedPrefs.getInt(KEY_NOTIFY_POS_MID, 1)) : 1;
+        int right = customData ? clampPos(mSharedPrefs.getInt(KEY_NOTIFY_POS_RIGHT, 2)) : 2;
+        int[] selection = {left, mid, right};
+
+        // 折叠视图：三位置数据（布局内候选组自带名称，运行时只显示所选组）
+        RemoteViews views = new RemoteViews(getPackageName(), R.layout.notification_fan_compact);
+        fillNotifySlots(views, values, selection);
+        // 展开视图：三位置数据 + 四个功能按钮
+        RemoteViews expanded = new RemoteViews(getPackageName(), R.layout.notification_fan_expanded);
+        fillNotifySlots(expanded, values, selection);
+        expanded.setOnClickPendingIntent(R.id.btn_close, mPiOff);
+        expanded.setOnClickPendingIntent(R.id.btn_high, mPiFast);
+        expanded.setOnClickPendingIntent(R.id.btn_boost, mPiMax);
+        expanded.setOnClickPendingIntent(R.id.btn_float, mPiFloat);
+
+        String channelId = getNotifyChannelId();
+        int priority = NotificationCompat.PRIORITY_DEFAULT;
+        int p = mSharedPrefs.getInt(KEY_NOTIFY_PRIORITY, 1);
+        if (p <= 0) priority = NotificationCompat.PRIORITY_LOW;
+        else if (p >= 2) priority = NotificationCompat.PRIORITY_HIGH;
+
+        // 诊断：渠道被系统关闭时记录日志（应用通知权限正常但渠道级被关，通知不会显示）
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel ch = getSystemService(NotificationManager.class)
+                        .getNotificationChannel(channelId);
+                if (ch != null && ch.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+                    LogRecorder.getInstance().warn("ServiceEvent",
+                            "通知渠道[" + channelId + "]被系统关闭，通知不显示。请在系统设置中开启该渠道");
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return new NotificationCompat.Builder(this, channelId)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(title)
-                .setContentText(contentText)
+                .setCustomContentView(views)
+                .setCustomBigContentView(expanded)
                 .setOngoing(true)
                 .setShowWhen(false)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setWhen(getNotifyWhen())
+                .setOnlyAlertOnce(true)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .setPriority(priority)
                 .setContentIntent(mPiContent)
-                .addAction(R.drawable.ic_fan_off, "关闭", mPiOff)
-                .addAction(R.drawable.ic_fan_fast, "高速", mPiFast)
-                .addAction(R.drawable.ic_fan_max, "狂暴", mPiMax)
                 .build();
+    }
+
+    // 锁定排序时间戳：启动锁定，每 2 小时刷新一次，始终为近期时间
+    private long getNotifyWhen() {
+        long now = System.currentTimeMillis();
+        if (mNotifyWhen == 0L || now - mNotifyWhenLockedAt >= NOTIFY_WHEN_REFRESH_MS) {
+            mNotifyWhen = now;
+            mNotifyWhenLockedAt = now;
+        }
+        return mNotifyWhen;
+    }
+
+    private int clampPos(int v) {
+        return Math.max(0, Math.min(4, v));
     }
 
     // ===== 看门狗 =====
@@ -515,6 +655,13 @@ public class FanRefreshService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // 设置页修改通知数据/优先级后，立即触发一轮刷新让通知生效
+        if (intent != null && ACTION_REFRESH_NOW.equals(intent.getAction())) {
+            if (mBackgroundHandler != null && mRefreshTask != null) {
+                mBackgroundHandler.removeCallbacks(mRefreshTask);
+                mBackgroundHandler.post(mRefreshTask);
+            }
+        }
         return START_STICKY;
     }
 

@@ -4,12 +4,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.SwitchCompat;
@@ -24,15 +27,25 @@ public class AdvancedSettingsActivity extends BaseActivity {
     private static final String KEY_CHARGE_BOOST = "charge_auto_boost";
     private static final String KEY_HIDE_RECENTS = "exclude_from_recents";
     private static final String KEY_SCREEN_OFF_STOP = "screen_off_stop_fan";
-    private static final String KEY_NOTIFICATION_TITLE = "notification_title";
-
-    private static final String DEFAULT_NOTIFY_TITLE = "散热风扇正在运行";
+    // ========== 悬浮窗配置 ==========
+    private static final String KEY_FLOAT_ENABLED = "float_window_enabled";
+    private static final String KEY_FLOAT_ALPHA = "float_window_alpha";
+    private static final String KEY_FLOAT_SCALE = "float_window_scale";
+    private static final String KEY_FLOAT_INTERVAL = "float_window_interval_ms";
+    private static final String KEY_FLOAT_STYLE = "float_window_style";
+    private static final String KEY_FLOAT_FIXED = "float_fixed";
     private static final int REQUEST_PICK_IMAGE = 1001;
 
     private SharedPreferences mSp;
     private String[] timeOptions;
     private Spinner spWidgetRefresh, spNotifyRefresh;
-    private EditText etNotifyTitle;
+
+    // 悬浮窗控件
+    private androidx.appcompat.widget.SwitchCompat switchFloatWindow;
+    private LinearLayout floatOptions;
+    private SeekBar seekFloatAlpha, seekFloatScale;
+    private TextView tvFloatAlphaValue, tvFloatScaleValue;
+    private Spinner spFloatInterval, spFloatStyle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +57,9 @@ public class AdvancedSettingsActivity extends BaseActivity {
         setupCustomBackground();
         setupSwitches();
         setupRefreshSpinners();
-        setupNotificationTitle();
+        setupFloatWindow();
+        setupFloatShowChecks();
+        setupNotifyData();
         loadRefreshSpinnerSelection();
     }
 
@@ -146,21 +161,235 @@ public class AdvancedSettingsActivity extends BaseActivity {
         spNotifyRefresh.setOnItemSelectedListener(createIntervalListener(RefreshPrefs::setNotifyInterval));
     }
 
-    private void setupNotificationTitle() {
-        etNotifyTitle = findViewById(R.id.et_notify_title);
-        String savedTitle = mSp.getString(KEY_NOTIFICATION_TITLE, DEFAULT_NOTIFY_TITLE);
-        etNotifyTitle.setText(savedTitle);
-        etNotifyTitle.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                String input = etNotifyTitle.getText().toString().trim();
-                if (input.isEmpty()) {
-                    input = DEFAULT_NOTIFY_TITLE;
-                    etNotifyTitle.setText(input);
-                }
-                mSp.edit().putString(KEY_NOTIFICATION_TITLE, input).apply();
-                LogRecorder.getInstance().info("UserAction", "通知标题：" + input);
+    // ========== 信息悬浮窗设置 ==========
+
+    private void setupFloatWindow() {
+        switchFloatWindow = findViewById(R.id.switch_float_window);
+        floatOptions = findViewById(R.id.float_options);
+        seekFloatAlpha = findViewById(R.id.seek_float_alpha);
+        seekFloatScale = findViewById(R.id.seek_float_scale);
+        tvFloatAlphaValue = findViewById(R.id.tv_float_alpha_value);
+        tvFloatScaleValue = findViewById(R.id.tv_float_scale_value);
+        spFloatInterval = findViewById(R.id.sp_float_interval);
+        spFloatStyle = findViewById(R.id.sp_float_style);
+
+        boolean enabled = FloatWindowService.isEnabled(this);
+        switchFloatWindow.setChecked(enabled);
+        floatOptions.setVisibility(enabled ? View.VISIBLE : View.GONE);
+
+        switchFloatWindow.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // 与当前状态相同时跳过（避免 onResume 重入触发）
+            if (isChecked == FloatWindowService.isEnabled(this)) return;
+            if (isChecked && !Settings.canDrawOverlays(this)) {
+                // 未授权：记住开启意图，跳转授权页
+                FloatWindowService.setEnabled(this, true);
+                floatOptions.setVisibility(View.VISIBLE);
+                Toast.makeText(this, "请授予悬浮窗权限", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName())));
+                return;
             }
+            FloatWindowService.setEnabled(this, isChecked);
+            if (isChecked) {
+                startService(new Intent(this, FloatWindowService.class));
+            } else {
+                stopService(new Intent(this, FloatWindowService.class));
+            }
+            floatOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            LogRecorder.getInstance().info("UserAction", "信息悬浮窗开关：" + isChecked);
         });
+
+        // 透明度 20-100%
+        seekFloatAlpha.setMax(80);
+        int alpha = Math.max(20, Math.min(100, mSp.getInt(KEY_FLOAT_ALPHA, 90)));
+        seekFloatAlpha.setProgress(alpha - 20);
+        tvFloatAlphaValue.setText(alpha + "%");
+        seekFloatAlpha.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) return;
+                int v = progress + 20;
+                mSp.edit().putInt(KEY_FLOAT_ALPHA, v).apply();
+                tvFloatAlphaValue.setText(v + "%");
+                sendFloatUpdate();
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        // 缩放 50-120%
+        seekFloatScale.setMax(50);
+        int scale = Math.max(50, Math.min(120, mSp.getInt(KEY_FLOAT_SCALE, 80)));
+        seekFloatScale.setProgress(scale - 50);
+        tvFloatScaleValue.setText(scale + "%");
+        seekFloatScale.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (!fromUser) return;
+                int v = progress + 50;
+                mSp.edit().putInt(KEY_FLOAT_SCALE, v).apply();
+                tvFloatScaleValue.setText(v + "%");
+                sendFloatUpdate();
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        // 固定位置 + 点击穿透开关
+        androidx.appcompat.widget.SwitchCompat switchFloatFixed = findViewById(R.id.switch_float_fixed);
+        boolean fixedSaved = mSp.getBoolean(KEY_FLOAT_FIXED, false);
+        switchFloatFixed.setChecked(fixedSaved);
+        switchFloatFixed.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mSp.edit().putBoolean(KEY_FLOAT_FIXED, isChecked).apply();
+            sendFloatUpdate();
+        });
+
+        // 刷新频率：0.5/1/1.5/2 秒
+        final String[] intervalOptions = {"0.5秒", "1秒", "1.5秒", "2秒"};
+        final long[] intervalValues = {500L, 1000L, 1500L, 2000L};
+        spFloatInterval.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, intervalOptions));
+        long savedInterval = mSp.getLong(KEY_FLOAT_INTERVAL, 1000L);
+        for (int i = 0; i < intervalValues.length; i++) {
+            if (intervalValues[i] == savedInterval) spFloatInterval.setSelection(i);
+        }
+        spFloatInterval.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mSp.edit().putLong(KEY_FLOAT_INTERVAL, intervalValues[position]).apply();
+                sendFloatUpdate();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // 模式：横版 / 竖版
+        final String[] styleOptions = {"横版", "竖版"};
+        spFloatStyle.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, styleOptions));
+        spFloatStyle.setSelection(Math.max(0, Math.min(1, mSp.getInt(KEY_FLOAT_STYLE, 0))));
+        spFloatStyle.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == mSp.getInt(KEY_FLOAT_STYLE, 0)) return; // 同步选中时跳过
+                mSp.edit().putInt(KEY_FLOAT_STYLE, position).apply();
+                sendFloatUpdate();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+    }
+
+    // ========== 悬浮窗显示数据项 ==========
+    private void setupFloatShowChecks() {
+        final CheckBox[] checks = {
+                findViewById(R.id.check_float_mode),
+                findViewById(R.id.check_float_temp),
+                findViewById(R.id.check_float_rpm),
+                findViewById(R.id.check_float_power),
+                findViewById(R.id.check_float_pwm)
+        };
+        final String[] keys = {
+                "float_show_mode", "float_show_temp", "float_show_rpm",
+                "float_show_power", "float_show_pwm"
+        };
+        for (int i = 0; i < checks.length; i++) {
+            final int idx = i;
+            checks[i].setChecked(mSp.getBoolean(keys[i], true));
+            checks[i].setOnCheckedChangeListener((buttonView, isChecked) -> {
+                int shown = 0;
+                for (CheckBox cb : checks) if (cb.isChecked()) shown++;
+                if (shown == 0) {
+                    // 至少保留一项
+                    checks[idx].setChecked(true);
+                    Toast.makeText(this, "悬浮窗至少保留一项数据", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                mSp.edit().putBoolean(keys[idx], isChecked).apply();
+                sendFloatUpdate();
+            });
+        }
+    }
+
+    // ========== 通知栏数据位置 ==========
+    private void setupNotifyData() {
+        // 自定义开关：关闭时隐藏位置选项，默认 档位+转速+温度
+        final androidx.appcompat.widget.SwitchCompat switchNotifyCustom = findViewById(R.id.switch_notify_custom);
+        final LinearLayout notifyOptions = findViewById(R.id.notify_data_options);
+        boolean custom = mSp.getBoolean("notify_custom_data", false);
+        switchNotifyCustom.setChecked(custom);
+        notifyOptions.setVisibility(custom ? View.VISIBLE : View.GONE);
+        switchNotifyCustom.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mSp.edit().putBoolean("notify_custom_data", isChecked).apply();
+            notifyOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            sendNotifyRefresh();
+        });
+
+        final String[] dataOptions = {"档位", "转速", "温度", "功耗", "PWM"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, dataOptions);
+
+        Spinner spLeft = findViewById(R.id.sp_notify_left);
+        Spinner spMid = findViewById(R.id.sp_notify_mid);
+        Spinner spRight = findViewById(R.id.sp_notify_right);
+        spLeft.setAdapter(adapter);
+        spMid.setAdapter(adapter);
+        spRight.setAdapter(adapter);
+        spLeft.setSelection(Math.max(0, Math.min(4, mSp.getInt("notify_pos_left", 0))));
+        spMid.setSelection(Math.max(0, Math.min(4, mSp.getInt("notify_pos_mid", 1))));
+        spRight.setSelection(Math.max(0, Math.min(4, mSp.getInt("notify_pos_right", 2))));
+
+        AdapterView.OnItemSelectedListener posListener = new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String key = "notify_pos_left";
+                if (parent == spMid) key = "notify_pos_mid";
+                else if (parent == spRight) key = "notify_pos_right";
+                mSp.edit().putInt(key, position).apply();
+                sendNotifyRefresh();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        };
+        spLeft.setOnItemSelectedListener(posListener);
+        spMid.setOnItemSelectedListener(posListener);
+        spRight.setOnItemSelectedListener(posListener);
+
+    }
+
+    // 通知数据/优先级变化：触发 FanRefreshService 立即重建通知
+    private void sendNotifyRefresh() {
+        try {
+            startService(new Intent(this, FanRefreshService.class)
+                    .setAction(FanRefreshService.ACTION_REFRESH_NOW));
+        } catch (Exception ignored) {}
+    }
+
+    private void sendFloatUpdate() {
+        try {
+            startService(new Intent(this, FloatWindowService.class)
+                    .setAction(FloatWindowService.ACTION_UPDATE));
+        } catch (Exception ignored) {}
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mSp == null || switchFloatWindow == null) return;
+        boolean enabled = FloatWindowService.isEnabled(this);
+        if (enabled && !Settings.canDrawOverlays(this)) {
+            // 授权被拒绝，回滚开关
+            FloatWindowService.setEnabled(this, false);
+            enabled = false;
+            Toast.makeText(this, "未授予悬浮窗权限，已关闭悬浮窗功能", Toast.LENGTH_SHORT).show();
+        }
+        switchFloatWindow.setChecked(enabled);
+        if (floatOptions != null) {
+            floatOptions.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        }
+        // 授权返回后自动启动悬浮窗
+        if (enabled && !FloatWindowService.isRunning()) {
+            startService(new Intent(this, FloatWindowService.class));
+        }
+        // 同步悬浮窗样式（点击悬浮窗切换横竖版后，设置页下拉显示最新状态）
+        if (spFloatStyle != null) {
+            int style = Math.max(0, Math.min(1, mSp.getInt(KEY_FLOAT_STYLE, 0)));
+            if (spFloatStyle.getSelectedItemPosition() != style) {
+                spFloatStyle.setSelection(style);
+            }
+        }
     }
 
     private AdapterView.OnItemSelectedListener createIntervalListener(RefreshPrefs.IntervalSaver saver) {
