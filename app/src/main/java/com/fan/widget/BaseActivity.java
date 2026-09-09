@@ -84,6 +84,8 @@ public class BaseActivity extends AppCompatActivity {
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+            // 导航栏透明：小白条区域透出页面背景，实现底部沉浸
+            window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
             WindowCompat.setDecorFitsSystemWindows(window, false);
         }
         applyStatusBarTextColor();

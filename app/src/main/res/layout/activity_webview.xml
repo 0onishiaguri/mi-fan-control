@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- WebView 延伸至状态栏与小白条后方：网页自身背景铺满状态栏区域实现沉浸，顶部由 HTML padding 避让 -->
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"

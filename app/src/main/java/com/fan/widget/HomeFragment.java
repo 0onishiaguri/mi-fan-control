@@ -78,6 +78,7 @@ public class HomeFragment extends Fragment {
     private LinearLayout mCardTempNode;
     private TextView tvTempNodeName, tvTempNodeHint;
     private QuickLevelPicker mQuickPicker;
+    private int mUserPickedLevel = -1; // 用户最近一次手动选择的快捷档位（-1=未选择）
     private TextView tvServiceStatus, tvRunTime;
     private LinearLayout itemServiceStatus;
     private ImageView ivModeHelp;
@@ -161,6 +162,7 @@ public class HomeFragment extends Fragment {
             LogRecorder.getInstance().info("UserAction", "切换控制模式 → " + FanUtil.getModeNameById(mode));
             mExecutor.execute(() -> FanUtil.switchControlMode(mode));
             updateModeCardVisibility(mode);
+            mUserPickedLevel = -1;
             lastRpmZone = -1;
             mFilteredRpm = 0;
         });
@@ -191,6 +193,7 @@ public class HomeFragment extends Fragment {
         });
 
         mQuickPicker.setOnLevelSelectedListener(level -> {
+            mUserPickedLevel = level;
             String name = level == 0 ? "关闭" : level == 1 ? "静谧" : level == 2 ? "高速" : "狂暴";
             LogRecorder.getInstance().info("UserAction", "快捷档位选择 → " + name);
             mExecutor.execute(() -> {
@@ -446,7 +449,6 @@ public class HomeFragment extends Fragment {
 
     // 当前状态 → 快捷档位 index（关闭/静谧/高速/狂暴 = 0/1/2/4）
     private int getQuickLevelFromState(int rpm) {
-        if (rpm == 0) return 0;
         switch (FanUtil.currentControlMode) {
             case FanUtil.MODE_LOW_LEVEL:
             case FanUtil.MODE_APP_CUSTOM:
@@ -458,8 +460,9 @@ public class HomeFragment extends Fragment {
                 if (pwm <= 70) return 2;
                 return 4;
             }
-            default: // MODE_SYSTEM：不做 su 读取，映射为高速档
-                return 2;
+            default: // MODE_SYSTEM / 控制中心联调：优先保持用户最近手动选择，未选择时按转速显示关闭/默认高速
+                if (mUserPickedLevel >= 0) return mUserPickedLevel;
+                return rpm == 0 ? 0 : 2;
         }
     }
 

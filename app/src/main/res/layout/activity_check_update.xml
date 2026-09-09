@@ -1,194 +1,213 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 检查软件更新页：标题固定顶部不随滚动，内容滚动区在标题下方，底部悬浮下载按钮，
+     根 fitsSystemWindows 处理状态栏/小白条避让，背景由 BaseActivity 延伸实现沉浸 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="5dp">
+    android:fitsSystemWindows="true">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:paddingBottom="90dp"
-        android:scrollbars="none">
+        android:orientation="vertical">
 
+        <!-- 顶部标题栏（固定，不随滚动） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="100dp"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="6dp">
 
-            <!-- 当前版本卡片 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="检查软件更新"
+                android:textColor="@color/text_primary"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:clipToPadding="false"
+            android:paddingBottom="120dp">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/card_background"
-                android:clipToOutline="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:tag="blue_card">
+                android:orientation="vertical"
+                android:padding="20dp">
 
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:contentDescription="@null"
-                    android:src="@drawable/ic_check_update"
-                    app:tint="@color/text_primary" />
-
+                <!-- 当前版本卡片 -->
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:background="@drawable/card_background"
+                    android:clipToOutline="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:tag="blue_card">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_check_update"
+                        app:tint="@color/text_primary" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="当前版本"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tv_current_version"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 最新版本 / 检查状态卡片 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/card_background"
+                    android:clipToOutline="true"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:tag="blue_card">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="当前版本"
+                        android:text="最新版本"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_latest_version"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <ProgressBar
+                            android:id="@+id/progress_bar"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_marginStart="10dp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_latest_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
 
                     <TextView
-                        android:id="@+id/tv_current_version"
+                        android:id="@+id/tv_status_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="10dp"
                         android:textColor="@color/text_primary"
-                        android:textSize="20sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
 
-            <!-- 最新版本 / 检查状态卡片 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/card_background"
-                android:clipToOutline="true"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:tag="blue_card">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="最新版本"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/tv_latest_version"
+                    <Button
+                        android:id="@+id/btn_retry"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_btn_gray"
+                        android:text="重试"
                         android:textColor="@color/text_primary"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-
-                    <ProgressBar
-                        android:id="@+id/progress_bar"
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:layout_marginStart="10dp"
+                        android:textSize="14sp"
                         android:visibility="gone" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tv_latest_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/tv_status_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btn_retry"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_btn_gray"
-                    android:text="重试"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:visibility="gone" />
-            </LinearLayout>
-
-            <!-- 更新说明 -->
-            <LinearLayout
-                android:id="@+id/update_info_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/card_background"
-                android:clipToOutline="true"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:tag="blue_card"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="更新内容"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/tv_update_info"
+                <!-- 更新日志（已是最新版本时显示最新版本日志；发现新版本时显示新版本日志） -->
+                <LinearLayout
+                    android:id="@+id/update_info_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:lineSpacingExtra="3dp"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp" />
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/card_background"
+                    android:clipToOutline="true"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:tag="blue_card"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tv_update_info_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="更新日志"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tv_update_info"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:lineSpacingExtra="3dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
             </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
 
-        </LinearLayout>
-    </ScrollView>
-
-    <!-- 底部悬浮下载按钮（发现新版本时显示） -->
+    <!-- 底部悬浮下载按钮（发现新版本时显示，居中窄按钮，两侧露出内容，滚动时内容可从按钮后方滑过） -->
     <Button
         android:id="@+id/btn_download"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="52dp"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_margin="20dp"
+        android:layout_margin="16dp"
         android:background="@drawable/bg_download_btn"
+        android:elevation="0dp"
+        android:stateListAnimator="@null"
+        android:paddingHorizontal="48dp"
         android:text="下载更新"
         android:textColor="@android:color/white"
         android:textSize="16sp"
         android:textStyle="bold"
         android:visibility="gone" />
-
-    <!-- 页面标题 -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|left"
-        android:layout_marginLeft="25dp"
-        android:layout_marginTop="60dp"
-        android:text="检查软件更新"
-        android:textColor="@color/text_primary"
-        android:textSize="30sp"
-        android:textStyle="bold" />
 
 </FrameLayout>

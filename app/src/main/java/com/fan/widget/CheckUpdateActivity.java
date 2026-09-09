@@ -46,7 +46,7 @@ public class CheckUpdateActivity extends BaseActivity {
 
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
 
-    private TextView tvCurrentVersion, tvLatestVersion, tvLatestTime, tvStatusText, tvUpdateInfo;
+    private TextView tvCurrentVersion, tvLatestVersion, tvLatestTime, tvStatusText, tvUpdateInfo, tvUpdateInfoTitle;
     private ProgressBar progressBar;
     private LinearLayout updateInfoCard;
     private Button btnDownload, btnRetry;
@@ -68,6 +68,7 @@ public class CheckUpdateActivity extends BaseActivity {
         tvLatestTime = findViewById(R.id.tv_latest_time);
         tvStatusText = findViewById(R.id.tv_status_text);
         tvUpdateInfo = findViewById(R.id.tv_update_info);
+        tvUpdateInfoTitle = findViewById(R.id.tv_update_info_title);
         progressBar = findViewById(R.id.progress_bar);
         updateInfoCard = findViewById(R.id.update_info_card);
         btnDownload = findViewById(R.id.btn_download);
@@ -145,17 +146,19 @@ public class CheckUpdateActivity extends BaseActivity {
 
             setChecking(false);
             if (compareVersion(BuildConfig.VERSION_NAME, mLatestVersion) >= 0) {
-                // 已是最新版本
+                // 已是最新版本：显示最新版本（即当前版本）的更新日志
                 tvStatusText.setText("已是最新版本");
                 tvStatusText.setTextColor(color(R.color.update_ok));
                 btnDownload.setVisibility(View.GONE);
-                updateInfoCard.setVisibility(View.GONE);
+                updateInfoCard.setVisibility(View.VISIBLE);
+                tvUpdateInfoTitle.setText("更新日志");
             } else {
-                // 发现新版本
+                // 发现新版本：显示新版本更新日志
                 tvStatusText.setText("发现新版本 " + mLatestVersion);
                 tvStatusText.setTextColor(color(R.color.text_primary));
                 btnDownload.setVisibility(View.VISIBLE);
                 updateInfoCard.setVisibility(View.VISIBLE);
+                tvUpdateInfoTitle.setText("新版本更新日志");
             }
         } catch (Exception e) {
             tvStatusText.setText("检查失败，数据解析异常");

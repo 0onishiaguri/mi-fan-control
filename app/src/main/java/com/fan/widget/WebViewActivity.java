@@ -19,8 +19,7 @@ public class WebViewActivity extends BaseActivity { // 改为继承 BaseActivity
         webView = findViewById(R.id.webview);
         // 设置为透明，这样可以透出 BaseActivity 加载的自定义背景图
         webView.setBackgroundColor(0x00000000);
-        // 核心防遮挡：将内容整体向下移一个状态栏的高度
-        webView.setPadding(0, getStatusBarHeight(), 0, 0);
+        // 沉浸式：网页延伸到状态栏后方，顶部由 HTML 自身 padding 避让（感谢名单/用户协议已适配）
 
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient() {
